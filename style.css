@@ -1,0 +1,62 @@
+#restart {
+    
+    height: 50px;
+    width: 100px;
+    margin: 0 auto;
+}
+.background {
+    z-index:-1;
+    position: fixed;
+    background:url("images/level.png");
+    animation:4.0s scroll infinite linear;
+    /* top:0;
+    left:0; */
+    width: 450px;
+    height: 500px;   
+}
+@keyframes scroll{
+    100%{
+      background-position:0px 1200px;
+    }
+  }
+@font-face {
+    font-family: "lazer";
+    src: url("misc/Lazer84.ttf");
+}
+@font-face {
+    font-family: "streamster";
+    src: url("misc/Streamster.ttf");
+}
+@font-face {
+    font-family: "vcr";
+    src: url("misc/vcrmono.ttf");
+}
+
+canvas {
+    background: transparent;
+    left: 50%;
+}
+.container {
+    width: 450px;
+    height: 500px;
+}
+body {
+    background: black;
+}
+/*
+#testLazer {
+    font-family: "lazer84";
+    font-size: 60px;
+    color: #24006D;
+}
+
+#testStreamster {
+    font-family: "streamster";
+    font-size: 70px;
+    color: #EE209A;
+}
+#vcr {
+    font-family: "vcr";
+    font-size: 70px;
+    color: white;
+}*/
