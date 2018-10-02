@@ -21,7 +21,7 @@ var playerMoveRight = false;
 
 // Preload game images
 var images = {};
-['souffleuse-brandnew.png', 'level.png', 'player.png'].forEach(imgName => {
+['boule-neige.png', 'level.png', 'player.png'].forEach(imgName => {
     var img = document.createElement('img');
     img.src = 'images/' + imgName;
     images[imgName] = img;
@@ -36,7 +36,7 @@ class Enemy {
     constructor(xPos) {
         this.x = xPos;
         this.y = -ENEMY_HEIGHT;
-        this.sprite = images['souffleuse-brandnew.png'];
+        this.sprite = images['boule-neige.png'];
 
         // Each enemy should have a different speed
         this.speed = Math.random() / 2 + 0.25;
@@ -126,7 +126,7 @@ class Engine {
 
         var enemySpot;
         // Keep looping until we find a free enemy spot at random
-        while (!enemySpot || this.enemies[enemySpot]) {
+        while (enemySpot === undefined || this.enemies[enemySpot]) {
             enemySpot = Math.floor(Math.random() * enemySpots);
         }
 

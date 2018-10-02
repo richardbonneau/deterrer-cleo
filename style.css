@@ -1,16 +1,8 @@
-#restart {
-    
-    height: 50px;
-    width: 100px;
-    margin: 0 auto;
-}
 .background {
     z-index:-1;
     position: fixed;
     background:url("images/level.png");
-    animation:4.0s scroll infinite linear;
-    /* top:0;
-    left:0; */
+    animation:5.0s scroll infinite linear;
     width: 450px;
     height: 500px;   
 }
@@ -18,7 +10,26 @@
     100%{
       background-position:0px 1200px;
     }
-  }
+}
+canvas {
+    background: transparent;
+    left: 100%;
+}
+.container {
+    width: 450px;
+    height: 500px;
+}
+body {
+    background: black;
+}
+
+
+#restart {
+    height: 50px;
+    width: 100px;
+    margin: 0 auto;
+}
+
 @font-face {
     font-family: "lazer";
     src: url("misc/Lazer84.ttf");
@@ -32,17 +43,8 @@
     src: url("misc/vcrmono.ttf");
 }
 
-canvas {
-    background: transparent;
-    left: 50%;
-}
-.container {
-    width: 450px;
-    height: 500px;
-}
-body {
-    background: black;
-}
+
+
 /*
 #testLazer {
     font-family: "lazer84";
