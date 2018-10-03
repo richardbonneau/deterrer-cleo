@@ -2,12 +2,16 @@
 var GAME_WIDTH = 450;
 var GAME_HEIGHT = 500;
 
-var PLAYER_WIDTH = 50;
-var PLAYER_HEIGHT = 100;
+var PLAYER_WIDTH = 40;
+var PLAYER_HEIGHT = 80;
 
 var ENEMY_WIDTH = 75;
 var ENEMY_HEIGHT = 75;
 var MAX_ENEMIES = 1;
+
+var PLANE_WIDTH = 150;
+var PLANE_HEIGHT = 78;
+var MAX_PLANES = 1;
 
 var BOUFFE_WIDTH = 75;
 var BOUFFE_HEIGHT = 100;
@@ -50,7 +54,7 @@ var images = {};
 
     "bouffe-parachute.png",
 
-    "boule-neige.png",
+    "boule-neige.png", "plane-right.png", "plane-left.png",
 
 ].forEach(imgName => {
     var img = document.createElement('img');
@@ -105,10 +109,31 @@ class Enemy {
     }
 }
 
+class Plane {
+    constructor(yPos, spawnLeft) {
+        this.x = spawnLeft ? -PLANE_WIDTH : GAME_WIDTH + PLANE_WIDTH;
+        this.y = yPos;
+        this.sprite = spawnLeft ? images['plane-right.png'] : images['plane-left.png'];
+
+        // Each enemy should have a different speed
+        this.verticalSpeed = Math.random() / 2 + 0.15;
+        this.horizontalSpeed = Math.random() / 2 + 0.60;
+    }
+
+    update(timeDiff) {
+        this.y = this.y + timeDiff * this.verticalSpeed;
+        this.x = this.x + timeDiff * this.horizontalSpeed;
+    }
+
+    render(ctx) {
+        ctx.drawImage(this.sprite, this.x, this.y);
+    }
+}
+
 class Bouffe {
     constructor(xPos) {
         this.x = xPos;
-        this.y = -ENEMY_HEIGHT;
+        this.y = -BOUFFE_HEIGHT;
         this.sprite = images['bouffe-parachute.png'];
 
         // Each enemy should have a different speed
@@ -178,6 +203,7 @@ class Engine {
 
         // Setup enemies, making sure there are always three
         this.setupEnemies();
+        this.setupPlanes();
 
         // Setup the <canvas> element where we will be drawing
         var canvas = document.createElement('canvas');
@@ -205,6 +231,16 @@ class Engine {
         }
     }
 
+    setupPlanes() {
+        if (!this.leftPlanes) {
+            this.leftPlanes = [];
+        }
+
+        while (this.leftPlanes.filter(e => !!e).length < MAX_PLANES) {
+            this.addPlane();
+        }
+    }
+
     // This method finds a random spot where there is no enemy, and puts one in there
     addEnemy() {
         var enemySpots = GAME_WIDTH / ENEMY_WIDTH;
@@ -216,6 +252,28 @@ class Engine {
         }
 
         this.enemies[enemySpot] = new Enemy(enemySpot * ENEMY_WIDTH);
+    }
+
+    addPlane() {
+        var leftPlaneSpots = GAME_HEIGHT / PLANE_HEIGHT;
+
+        var leftPlaneSpot;
+        // Keep looping until we find a free spot at random
+        while (leftPlaneSpot === undefined || this.leftPlanes[leftPlaneSpot]) {
+            leftPlaneSpot = Math.floor(Math.random() * leftPlaneSpots);
+        }
+        this.leftPlanes[leftPlaneSpot] = new Plane(leftPlaneSpot * PLANE_HEIGHT - (GAME_HEIGHT / 2), false);
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // var rightPlaneSpots = GAME_HEIGHT / PLANE_HEIGHT;
+
+        // var rightPlaneSpot;
+        // // Keep looping until we find a free spot at random
+        // while (rightPlaneSpot === undefined || this.rightPlanes[rightPlaneSpot]) {
+        //     rightPlaneSpot = Math.floor(Math.random() * rightPlaneSpots);
+        // }
+        // this.rightPlanes[rightPlaneSpot] = new Plane(rightPlaneSpot * PLANE_HEIGHT - (GAME_HEIGHT / 2), false);
     }
 
     stopScrollingLevel() {
@@ -287,14 +345,13 @@ class Engine {
         }
 
 
+
         //  Checks if we're at the start or end of the level
         if (barnStart === true) {
             this.barn.update(timeDiff);
         }
         if (paradiseStart === true) {
-
             this.paradise.update(timeDiff);
-            console.log(this.paradise.y)
             if (this.paradise.y >= 0) {
                 didPlayerWinGame = true;
             }
@@ -303,12 +360,14 @@ class Engine {
         // Score
         this.score += timeDiff;
 
-        // Call update on all enemies
+        // Call update on all game elements
         this.enemies.forEach(enemy => enemy.update(timeDiff));
+        this.leftPlanes.forEach(plane => plane.update(timeDiff));
 
         // Draw everything!
         this.ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
         this.enemies.forEach(enemy => enemy.render(this.ctx)); // draw the enemies
+        this.leftPlanes.forEach(plane => plane.render(this.ctx)); // draw the planes
         this.barn.render(this.ctx); // draw the barn
         this.paradise.render(this.ctx); // draw the barn
         this.player.render(this.ctx); // draw the player
@@ -320,7 +379,13 @@ class Engine {
                 delete this.enemies[enemyIdx];
             }
         });
+        this.leftPlanes.forEach((plane, planeIdx) => {
+            if (plane.x > GAME_WIDTH || paradiseStart) {
+                delete this.leftPlanes[planeIdx];
+            }
+        });
         this.setupEnemies();
+        this.setupPlanes();
 
 
         // Check if player is dead
@@ -346,7 +411,6 @@ class Engine {
     }
 
     isPlayerDead() {
-        // TODO: fix this function!
         for (let i = 0; i < this.enemies.length; i++) {
             if (this.enemies[i] == undefined) continue;
             else if (
@@ -356,8 +420,8 @@ class Engine {
                 this.enemies[i].y + ENEMY_HEIGHT > this.player.y) {
 
                 console.log("DEAD")
-                this.stopScrollingLevel()
-                return true;
+                //this.stopScrollingLevel()
+                //return true;
             }
         }
 
