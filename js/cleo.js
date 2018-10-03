@@ -31,19 +31,27 @@ var didPlayerWinGame = false;
 
 //  Levels
 var level0 = true;
-var level1 = true;
+var level1 = false;
+var level2 = false;
+var level3 = false;
+var level4 = false;
 
 
 //  Player Movement
 var playerMoveLeft = false;
 var playerMoveRight = false;
+var playerMoveUp = false;
+var playerMoveDown = false;
 
 const MOVE_LEFT = 'left';
 const MOVE_RIGHT = 'right';
+const MOVE_UP = 'up';
+const MOVE_DOWN = 'down';
 
 var LEFT_ARROW_CODE = 37;
 var RIGHT_ARROW_CODE = 39;
-
+var UP_ARROW_CODE = 38;
+var DOWN_ARROW_CODE = 40;
 
 //  Preload game images
 var images = {};
@@ -52,7 +60,8 @@ var images = {};
 
     "player.png",
 
-    "bouffe-parachute.png",
+    "bouffe-parachute.png", "bone-parachute.png", "tuque.png",
+    "bombe-parachute.png", "spike-parachute.png",
 
     "boule-neige.png", "plane-right.png", "plane-left.png",
 
@@ -77,13 +86,19 @@ class Player {
     move(direction) {
         if (direction === MOVE_LEFT) {
             playerMoveLeft = true;
-        }
-        else if (direction === MOVE_RIGHT) {
+        } else if (direction === MOVE_RIGHT) {
             playerMoveRight = true;
+        } else if (direction === MOVE_UP) {
+            playerMoveUp = true;
+        } else if (direction === MOVE_DOWN) {
+            playerMoveDown = true;
         }
     }
-    update(timeDiff) {
+    updateHorizontal(timeDiff) {
         this.x = this.x + timeDiff * this.speed;
+    }
+    updateVertical(timeDiff) {
+        this.y = this.y + timeDiff * this.speed;
     }
 
     render(ctx) {
@@ -116,8 +131,8 @@ class Plane {
         this.sprite = spawnLeft ? images['plane-right.png'] : images['plane-left.png'];
 
         // Each enemy should have a different speed
-        this.verticalSpeed = Math.random() / 2 + 0.15;
-        this.horizontalSpeed = Math.random() / 2 + 0.60;
+        this.verticalSpeed = ((Math.random() - 0.5) + 0.05) / 4;
+        this.horizontalSpeed = Math.random() / 2 + 0.10;
     }
 
     update(timeDiff) {
@@ -176,8 +191,6 @@ class Paradise {
         this.speed = 0.1;
     }
 
-    // This method is called by the game engine when left/right arrows are pressed
-
     update(timeDiff) {
         this.y = this.y + timeDiff * this.speed;
     }
@@ -235,10 +248,17 @@ class Engine {
         if (!this.leftPlanes) {
             this.leftPlanes = [];
         }
+        //  TODO: ajouter right planes fait crasher le jeu
+        // if (!this.rightPlanes) {
+        //     this.rightPlanes = [];
+        // }
 
         while (this.leftPlanes.filter(e => !!e).length < MAX_PLANES) {
             this.addPlane();
         }
+        // while (this.rightPlanes.filter(e => !!e).length < MAX_PLANES) {
+        //     this.addPlane();
+        // }
     }
 
     // This method finds a random spot where there is no enemy, and puts one in there
@@ -262,10 +282,10 @@ class Engine {
         while (leftPlaneSpot === undefined || this.leftPlanes[leftPlaneSpot]) {
             leftPlaneSpot = Math.floor(Math.random() * leftPlaneSpots);
         }
-        this.leftPlanes[leftPlaneSpot] = new Plane(leftPlaneSpot * PLANE_HEIGHT - (GAME_HEIGHT / 2), false);
+        this.leftPlanes[leftPlaneSpot] = new Plane(leftPlaneSpot * PLANE_HEIGHT, true);
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+        //  TODO: ajouter right planes fait crasher le jeu
         // var rightPlaneSpots = GAME_HEIGHT / PLANE_HEIGHT;
 
         // var rightPlaneSpot;
@@ -273,7 +293,7 @@ class Engine {
         // while (rightPlaneSpot === undefined || this.rightPlanes[rightPlaneSpot]) {
         //     rightPlaneSpot = Math.floor(Math.random() * rightPlaneSpots);
         // }
-        // this.rightPlanes[rightPlaneSpot] = new Plane(rightPlaneSpot * PLANE_HEIGHT - (GAME_HEIGHT / 2), false);
+        // this.rightPlanes[rightPlaneSpot] = new Plane(rightPlaneSpot * PLANE_HEIGHT, false);
     }
 
     stopScrollingLevel() {
@@ -290,16 +310,24 @@ class Engine {
         document.addEventListener('keydown', down => {
             if (down.keyCode === LEFT_ARROW_CODE) {
                 this.player.move(MOVE_LEFT);
-            }
-            else if (down.keyCode === RIGHT_ARROW_CODE) {
+            } else if (down.keyCode === RIGHT_ARROW_CODE) {
                 this.player.move(MOVE_RIGHT);
+            } else if (down.keyCode === UP_ARROW_CODE) {
+                this.player.move(MOVE_UP);
+            } else if (down.keyCode === DOWN_ARROW_CODE) {
+                this.player.move(MOVE_DOWN);
             }
+
         });
         document.addEventListener("keyup", up => {
             if (up.keyCode === LEFT_ARROW_CODE) {
                 playerMoveLeft = false;
             } else if (up.keyCode === RIGHT_ARROW_CODE) {
                 playerMoveRight = false;
+            } else if (up.keyCode === UP_ARROW_CODE) {
+                playerMoveUp = false;
+            } else if (up.keyCode === DOWN_ARROW_CODE) {
+                playerMoveDown = false;
             }
         })
         // Space
@@ -314,6 +342,16 @@ class Engine {
         document.addEventListener("keydown", down => {
             if (down.keyCode === 17) {
                 paradiseStart = true;
+            }
+        })
+
+        //  Levels
+        document.addEventListener("keydown", down => {
+            if (down.keyCode === 48) {
+                level0 = true;
+                level1 = false;
+                level3 = false;
+                level4 = false;
             }
         })
 
@@ -338,10 +376,16 @@ class Engine {
 
         //  Update the player's positon if needed
         if (playerMoveLeft === true) {
-            this.player.update(-timeDiff);
-
+            this.player.updateHorizontal(-timeDiff);
         } else if (playerMoveRight === true) {
-            this.player.update(timeDiff);
+            this.player.updateHorizontal(timeDiff);
+        }
+        if (playerMoveUp === true) {
+            if (playerMoveLeft || playerMoveRight) this.player.updateVertical(-timeDiff / 1.5);
+            else this.player.updateVertical(-timeDiff);
+        } else if (playerMoveDown === true) {
+            if (playerMoveLeft || playerMoveRight) this.player.updateVertical(timeDiff / 1.5);
+            else this.player.updateVertical(timeDiff);
         }
 
 
