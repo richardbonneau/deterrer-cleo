@@ -74,6 +74,7 @@ var images = {};
     "player.png",
 
     "bouffe-parachute.png", "bone-parachute.png", "tuque.png",
+
     "bombe-parachute.png", "spike-parachute.png",
 
     "boule-neige.png", "plane-right.png", "plane-left.png",
@@ -123,6 +124,25 @@ class Enemy {
         this.x = xPos;
         this.y = -ENEMY_HEIGHT;
         this.sprite = images['boule-neige.png'];
+
+        // Each enemy should have a different speed
+        this.speed = Math.random() / 2 + 0.25;
+    }
+
+    update(timeDiff) {
+        this.y = this.y + timeDiff * this.speed;
+    }
+
+    render(ctx) {
+        ctx.drawImage(this.sprite, this.x, this.y);
+    }
+}
+
+class Bomb {
+    constructor(xPos) {
+        this.x = xPos;
+        this.y = -BOMB_HEIGHT;
+        this.sprite = images['bombe-parachute.png'];
 
         // Each enemy should have a different speed
         this.speed = Math.random() / 2 + 0.25;
@@ -228,6 +248,7 @@ class Engine {
 
         // Setup enemies, making sure there are always three
         this.setupEnemies();
+        this.setupBombs();
         this.setupPlanes();
 
         // Setup the <canvas> element where we will be drawing
@@ -253,6 +274,16 @@ class Engine {
 
         while (this.enemies.filter(e => !!e).length < MAX_ENEMIES) {
             this.addEnemy();
+        }
+    }
+
+    setupBombs() {
+        if (!this.bombs) {
+            this.bombs = [];
+        }
+
+        while (this.bombs.filter(e => !!e).length < MAX_BOMBS) {
+            this.addBomb();
         }
     }
 
@@ -284,6 +315,18 @@ class Engine {
         }
 
         this.enemies[enemySpot] = new Enemy(enemySpot * ENEMY_WIDTH);
+    }
+
+    addBomb() {
+        var bombSpots = GAME_WIDTH / BOMB_WIDTH;
+
+        var bombSpot;
+        // Keep looping until we find a free enemy spot at random
+        while (bombSpot === undefined || this.bombs[bombSpot]) {
+            bombSpot = Math.floor(Math.random() * bombSpots);
+        }
+
+        this.bombs[bombSpot] = new Bomb(bombSpot * BOMB_WIDTH);
     }
 
     addPlane() {
@@ -418,11 +461,13 @@ class Engine {
 
         // Call update on all game elements
         this.enemies.forEach(enemy => enemy.update(timeDiff));
+        this.bombs.forEach(bomb => bomb.update(timeDiff));
         this.leftPlanes.forEach(plane => plane.update(timeDiff));
 
         // Draw everything!
         this.ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
         this.enemies.forEach(enemy => enemy.render(this.ctx)); // draw the enemies
+        this.bombs.forEach(bomb => bomb.render(this.ctx)); // draw the enemies
         this.leftPlanes.forEach(plane => plane.render(this.ctx)); // draw the planes
         this.barn.render(this.ctx); // draw the barn
         this.paradise.render(this.ctx); // draw the barn
@@ -435,12 +480,18 @@ class Engine {
                 delete this.enemies[enemyIdx];
             }
         });
+        this.bombs.forEach((bomb, bombIdx) => {
+            if (bomb.y > GAME_HEIGHT || paradiseStart) {
+                delete this.bombs[bombIdx];
+            }
+        });
         this.leftPlanes.forEach((plane, planeIdx) => {
             if (plane.x > GAME_WIDTH || paradiseStart) {
                 delete this.leftPlanes[planeIdx];
             }
         });
         this.setupEnemies();
+        this.setupBombs();
         this.setupPlanes();
 
 
@@ -464,6 +515,27 @@ class Engine {
             this.lastFrame = Date.now();
             requestAnimationFrame(this.gameLoop);
         }
+    }
+
+    didPlayerPickUpFood() {
+        //  TODO: changer this.enemies par this.bouffe or something
+        // for (let i = 0; i < this.enemies.length; i++) {
+        //     if (this.enemies[i] == undefined) continue;
+        //     else if (
+        //         this.enemies[i].x < this.player.x + PLAYER_WIDTH &&
+        //         this.enemies[i].x + ENEMY_WIDTH > this.player.x &&
+        //         this.enemies[i].y < this.player.y + PLAYER_HEIGHT &&
+        //         this.enemies[i].y + ENEMY_HEIGHT > this.player.y) {
+
+        //         //console.log("DEAD")
+
+        //         //this.stopScrollingLevel()
+        //         //return true;
+        //     }
+        // }
+
+
+        return false;
     }
 
     isPlayerDead() {
