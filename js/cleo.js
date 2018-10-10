@@ -9,12 +9,25 @@ var ENEMY_WIDTH = 75;
 var ENEMY_HEIGHT = 75;
 var MAX_ENEMIES = 1;
 
+var BOMB_WIDTH = 75;
+var BOMB_HEIGHT = 100;
+var MAX_BOMBS = 1;
+
+var SPIKE_WIDTH = 75;
+var SPIKE_HEIGHT = 100;
+var MAX_SPIKES = 1;
+
+var BONE_WIDTH = 75;
+var BONE_HEIGHT = 100;
+var MAX_BONES = 1;
+
+var FOOD_WIDTH = 75;
+var FOOD_HEIGHT = 100;
+var MAX_FOODS = 1;
+
 var PLANE_WIDTH = 150;
 var PLANE_HEIGHT = 78;
 var MAX_PLANES = 1;
-
-var BOUFFE_WIDTH = 75;
-var BOUFFE_HEIGHT = 100;
 
 
 //  Start and Finish
@@ -131,10 +144,9 @@ class Plane {
         this.sprite = spawnLeft ? images['plane-right.png'] : images['plane-left.png'];
 
         // Each enemy should have a different speed
-        this.verticalSpeed = ((Math.random() - 0.5) + 0.05) / 4;
         this.horizontalSpeed = Math.random() / 2 + 0.10;
+        this.verticalSpeed = (Math.random() - 0.5) / 10;
     }
-
     update(timeDiff) {
         this.y = this.y + timeDiff * this.verticalSpeed;
         this.x = this.x + timeDiff * this.horizontalSpeed;
@@ -463,7 +475,8 @@ class Engine {
                 this.enemies[i].y < this.player.y + PLAYER_HEIGHT &&
                 this.enemies[i].y + ENEMY_HEIGHT > this.player.y) {
 
-                console.log("DEAD")
+                //console.log("DEAD")
+
                 //this.stopScrollingLevel()
                 //return true;
             }
