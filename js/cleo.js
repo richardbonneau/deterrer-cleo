@@ -9,13 +9,13 @@ var ENEMY_WIDTH = 75;
 var ENEMY_HEIGHT = 75;
 var MAX_ENEMIES = 1;
 
-var BOMB_WIDTH = 75;
-var BOMB_HEIGHT = 100;
-var MAX_BOMBS = 1;
+var ANVIL_WIDTH = 75;
+var ANVIL_HEIGHT = 35;
+var MAX_ANVILS = 1;
 
-var SPIKE_WIDTH = 75;
-var SPIKE_HEIGHT = 100;
-var MAX_SPIKES = 1;
+var BOX_WIDTH = 50;
+var BOX_HEIGHT = 70;
+var MAX_BOXES = 1;
 
 var BONE_WIDTH = 75;
 var BONE_HEIGHT = 100;
@@ -25,8 +25,8 @@ var FOOD_WIDTH = 75;
 var FOOD_HEIGHT = 100;
 var MAX_FOODS = 1;
 
-var PLANE_WIDTH = 150;
-var PLANE_HEIGHT = 78;
+var PLANE_WIDTH = 145;
+var PLANE_HEIGHT = 50;
 var MAX_PLANES = 1;
 
 
@@ -75,7 +75,7 @@ var images = {};
 
     "bouffe-parachute.png", "bone-parachute.png", "tuque.png",
 
-    "bombe-parachute.png", "spike-parachute.png",
+    "bombe-parachute.png", "spike-parachute.png", "anvil.png", "box.png",
 
     "boule-neige.png", "plane-right.png", "plane-left.png",
 
@@ -95,7 +95,6 @@ class Player {
         this.sprite = images['player.png'];
         this.speed = 0.2;
     }
-
     // This method is called by the game engine when left/right arrows are pressed
     move(direction) {
         if (direction === MOVE_LEFT) {
@@ -114,44 +113,37 @@ class Player {
     updateVertical(timeDiff) {
         this.y = this.y + timeDiff * this.speed;
     }
-
     render(ctx) {
         ctx.drawImage(this.sprite, this.x, this.y);
     }
 }
-class Enemy {
+class Anvil {
     constructor(xPos) {
         this.x = xPos;
-        this.y = -ENEMY_HEIGHT;
-        this.sprite = images['boule-neige.png'];
+        this.y = -ANVIL_HEIGHT;
+        this.sprite = images['anvil.png'];
 
         // Each enemy should have a different speed
-        this.speed = Math.random() / 2 + 0.25;
+        this.speed = Math.random() / 2 + 0.2;
     }
-
     update(timeDiff) {
         this.y = this.y + timeDiff * this.speed;
     }
-
     render(ctx) {
         ctx.drawImage(this.sprite, this.x, this.y);
     }
 }
 
-class Bomb {
+class Box {
     constructor(xPos) {
         this.x = xPos;
-        this.y = -BOMB_HEIGHT;
-        this.sprite = images['bombe-parachute.png'];
-
-        // Each enemy should have a different speed
-        this.speed = Math.random() / 2 + 0.25;
+        this.y = -BOX_HEIGHT;
+        this.sprite = images['box.png'];
+        this.speed = Math.random() / 2 + 0.15;
     }
-
     update(timeDiff) {
         this.y = this.y + timeDiff * this.speed;
     }
-
     render(ctx) {
         ctx.drawImage(this.sprite, this.x, this.y);
     }
@@ -162,8 +154,6 @@ class Plane {
         this.x = spawnLeft ? -PLANE_WIDTH : GAME_WIDTH + PLANE_WIDTH;
         this.y = yPos;
         this.sprite = spawnLeft ? images['plane-right.png'] : images['plane-left.png'];
-
-        // Each enemy should have a different speed
         this.horizontalSpeed = Math.random() / 2 + 0.10;
         this.verticalSpeed = (Math.random() - 0.5) / 10;
     }
@@ -171,7 +161,6 @@ class Plane {
         this.y = this.y + timeDiff * this.verticalSpeed;
         this.x = this.x + timeDiff * this.horizontalSpeed;
     }
-
     render(ctx) {
         ctx.drawImage(this.sprite, this.x, this.y);
     }
@@ -182,15 +171,11 @@ class Bouffe {
         this.x = xPos;
         this.y = -BOUFFE_HEIGHT;
         this.sprite = images['bouffe-parachute.png'];
-
-        // Each enemy should have a different speed
         this.speed = 2 + 0.25;
     }
-
     update(timeDiff) {
         this.y = this.y + timeDiff * this.speed;
     }
-
     render(ctx) {
         ctx.drawImage(this.sprite, this.x, this.y);
     }
@@ -247,8 +232,8 @@ class Engine {
         this.paradise = new Paradise();
 
         // Setup enemies, making sure there are always three
-        this.setupEnemies();
-        this.setupBombs();
+        this.setupAnvils();
+        this.setupBoxes();
         this.setupPlanes();
 
         // Setup the <canvas> element where we will be drawing
@@ -267,23 +252,23 @@ class Engine {
      The game allows for 5 horizontal slots where an enemy can be present.
      At any point in time there can be at most MAX_ENEMIES enemies otherwise the game would be impossible
      */
-    setupEnemies() {
-        if (!this.enemies) {
-            this.enemies = [];
+    setupAnvils() {
+        if (!this.anvils) {
+            this.anvils = [];
         }
 
-        while (this.enemies.filter(e => !!e).length < MAX_ENEMIES) {
-            this.addEnemy();
+        while (this.anvils.filter(e => !!e).length < MAX_ANVILS) {
+            this.addAnvil();
         }
     }
 
-    setupBombs() {
-        if (!this.bombs) {
-            this.bombs = [];
+    setupBoxes() {
+        if (!this.boxes) {
+            this.boxes = [];
         }
 
-        while (this.bombs.filter(e => !!e).length < MAX_BOMBS) {
-            this.addBomb();
+        while (this.boxes.filter(e => !!e).length < MAX_BOXES) {
+            this.addBox();
         }
     }
 
@@ -305,28 +290,28 @@ class Engine {
     }
 
     // This method finds a random spot where there is no enemy, and puts one in there
-    addEnemy() {
-        var enemySpots = GAME_WIDTH / ENEMY_WIDTH;
+    addAnvil() {
+        var anvilSpots = GAME_WIDTH / ANVIL_WIDTH;
 
-        var enemySpot;
+        var anvilSpot;
         // Keep looping until we find a free enemy spot at random
-        while (enemySpot === undefined || this.enemies[enemySpot]) {
-            enemySpot = Math.floor(Math.random() * enemySpots);
+        while (anvilSpot === undefined || this.anvils[anvilSpot]) {
+            anvilSpot = Math.floor(Math.random() * anvilSpots);
         }
 
-        this.enemies[enemySpot] = new Enemy(enemySpot * ENEMY_WIDTH);
+        this.anvils[anvilSpot] = new Anvil(anvilSpot * ANVIL_WIDTH);
     }
 
-    addBomb() {
-        var bombSpots = GAME_WIDTH / BOMB_WIDTH;
+    addBox() {
+        var boxSpots = GAME_WIDTH / BOX_WIDTH;
 
-        var bombSpot;
+        var boxSpot;
         // Keep looping until we find a free enemy spot at random
-        while (bombSpot === undefined || this.bombs[bombSpot]) {
-            bombSpot = Math.floor(Math.random() * bombSpots);
+        while (boxSpot === undefined || this.boxes[boxSpot]) {
+            boxSpot = Math.floor(Math.random() * boxSpots);
         }
 
-        this.bombs[bombSpot] = new Bomb(bombSpot * BOMB_WIDTH);
+        this.boxes[boxSpot] = new Box(boxSpot * BOX_WIDTH);
     }
 
     addPlane() {
@@ -460,29 +445,29 @@ class Engine {
         this.score += timeDiff;
 
         // Call update on all game elements
-        this.enemies.forEach(enemy => enemy.update(timeDiff));
-        this.bombs.forEach(bomb => bomb.update(timeDiff));
+        this.anvils.forEach(anvil => anvil.update(timeDiff));
+        this.boxes.forEach(box => box.update(timeDiff));
         this.leftPlanes.forEach(plane => plane.update(timeDiff));
 
         // Draw everything!
         this.ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-        this.enemies.forEach(enemy => enemy.render(this.ctx)); // draw the enemies
-        this.bombs.forEach(bomb => bomb.render(this.ctx)); // draw the enemies
-        this.leftPlanes.forEach(plane => plane.render(this.ctx)); // draw the planes
-        this.barn.render(this.ctx); // draw the barn
-        this.paradise.render(this.ctx); // draw the barn
-        this.player.render(this.ctx); // draw the player
+        this.anvils.forEach(anvil => anvil.render(this.ctx));
+        this.boxes.forEach(box => box.render(this.ctx));
+        this.leftPlanes.forEach(plane => plane.render(this.ctx));
+        this.barn.render(this.ctx);
+        this.paradise.render(this.ctx);
+        this.player.render(this.ctx);
 
 
         // Check if any enemies should die
-        this.enemies.forEach((enemy, enemyIdx) => {
-            if (enemy.y > GAME_HEIGHT || paradiseStart) {
-                delete this.enemies[enemyIdx];
+        this.anvils.forEach((anvil, anvilIdx) => {
+            if (anvil.y > GAME_HEIGHT || paradiseStart) {
+                delete this.anvils[anvilIdx];
             }
         });
-        this.bombs.forEach((bomb, bombIdx) => {
-            if (bomb.y > GAME_HEIGHT || paradiseStart) {
-                delete this.bombs[bombIdx];
+        this.boxes.forEach((box, boxIdx) => {
+            if (box.y > GAME_HEIGHT || paradiseStart) {
+                delete this.boxes[boxIdx];
             }
         });
         this.leftPlanes.forEach((plane, planeIdx) => {
@@ -490,8 +475,8 @@ class Engine {
                 delete this.leftPlanes[planeIdx];
             }
         });
-        this.setupEnemies();
-        this.setupBombs();
+        this.setupAnvils();
+        this.setupBoxes();
         this.setupPlanes();
 
 
@@ -539,18 +524,46 @@ class Engine {
     }
 
     isPlayerDead() {
-        for (let i = 0; i < this.enemies.length; i++) {
-            if (this.enemies[i] == undefined) continue;
+        //  anvils
+        for (let i = 0; i < this.anvils.length; i++) {
+            if (this.anvils[i] == undefined) continue;
             else if (
-                this.enemies[i].x < this.player.x + PLAYER_WIDTH &&
-                this.enemies[i].x + ENEMY_WIDTH > this.player.x &&
-                this.enemies[i].y < this.player.y + PLAYER_HEIGHT &&
-                this.enemies[i].y + ENEMY_HEIGHT > this.player.y) {
+                this.anvils[i].x < this.player.x + PLAYER_WIDTH &&
+                this.anvils[i].x + ANVIL_WIDTH > this.player.x &&
+                this.anvils[i].y < this.player.y + PLAYER_HEIGHT &&
+                this.anvils[i].y + ANVIL_HEIGHT > this.player.y) {
 
-                //console.log("DEAD")
+                console.log("DEAD")
+                this.stopScrollingLevel()
+                return true;
+            }
+        }
+        //  Planes
+        for (let i = 0; i < this.leftPlanes.length; i++) {
+            if (this.leftPlanes[i] == undefined) continue;
+            else if (
+                this.leftPlanes[i].x < this.player.x + PLANE_WIDTH &&
+                this.leftPlanes[i].x + PLANE_WIDTH > this.player.x &&
+                this.leftPlanes[i].y < this.player.y + PLANE_HEIGHT &&
+                this.leftPlanes[i].y + PLANE_HEIGHT > this.player.y) {
 
-                //this.stopScrollingLevel()
-                //return true;
+                console.log("DEAD")
+                this.stopScrollingLevel()
+                return true;
+            }
+        }
+        //  Box
+        for (let i = 0; i < this.boxes.length; i++) {
+            if (this.boxes[i] == undefined) continue;
+            else if (
+                this.boxes[i].x < this.player.x + BOX_WIDTH &&
+                this.boxes[i].x + BOX_WIDTH > this.player.x &&
+                this.boxes[i].y < this.player.y + BOX_HEIGHT &&
+                this.boxes[i].y + BOX_HEIGHT > this.player.y) {
+
+                console.log("DEAD")
+                this.stopScrollingLevel()
+                return true;
             }
         }
 
