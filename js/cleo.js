@@ -66,6 +66,13 @@ var RIGHT_ARROW_CODE = 39;
 var UP_ARROW_CODE = 38;
 var DOWN_ARROW_CODE = 40;
 
+
+//  Points Display
+var displayPoints = false;
+var points = 0;
+var pointsLocationX = 0;
+var pointsLocationY = 0;
+
 //  Preload game images
 var images = {};
 [
@@ -166,12 +173,12 @@ class Plane {
     }
 }
 
-class Bouffe {
+class Bone {
     constructor(xPos) {
         this.x = xPos;
-        this.y = -BOUFFE_HEIGHT;
-        this.sprite = images['bouffe-parachute.png'];
-        this.speed = 2 + 0.25;
+        this.y = -BONE_HEIGHT;
+        this.sprite = images['bone-parachute.png'];
+        this.speed = Math.random() / 2 + 0.15;
     }
     update(timeDiff) {
         this.y = this.y + timeDiff * this.speed;
@@ -230,11 +237,14 @@ class Engine {
         this.player = new Player();
         this.barn = new Barn();
         this.paradise = new Paradise();
+        
 
         // Setup enemies, making sure there are always three
         this.setupAnvils();
         this.setupBoxes();
         this.setupPlanes();
+
+        this.setupBones();
 
         // Setup the <canvas> element where we will be drawing
         var canvas = document.createElement('canvas');
@@ -289,6 +299,16 @@ class Engine {
         // }
     }
 
+    setupBones() {
+        if (!this.bones) {
+            this.bones = [];
+        }
+
+        while (this.bones.filter(e => !!e).length < MAX_BONES) {
+            this.addBone();
+        }
+    }
+
     // This method finds a random spot where there is no enemy, and puts one in there
     addAnvil() {
         var anvilSpots = GAME_WIDTH / ANVIL_WIDTH;
@@ -334,6 +354,18 @@ class Engine {
         //     rightPlaneSpot = Math.floor(Math.random() * rightPlaneSpots);
         // }
         // this.rightPlanes[rightPlaneSpot] = new Plane(rightPlaneSpot * PLANE_HEIGHT, false);
+    }
+
+    addBone() {
+        var boneSpots = GAME_WIDTH / BONE_WIDTH;
+
+        var boneSpot;
+        // Keep looping until we find a free enemy spot at random
+        while (boneSpot === undefined || this.bones[boneSpot]) {
+            boneSpot = Math.floor(Math.random() * boneSpots);
+        }
+
+        this.bones[boneSpot] = new Bone(boneSpot * BONE_WIDTH);
     }
 
     stopScrollingLevel() {
@@ -444,16 +476,19 @@ class Engine {
         // Score
         this.score += timeDiff;
 
+        this.pointDisplay()
+
         // Call update on all game elements
         this.anvils.forEach(anvil => anvil.update(timeDiff));
         this.boxes.forEach(box => box.update(timeDiff));
         this.leftPlanes.forEach(plane => plane.update(timeDiff));
-
+        this.bones.forEach(bone => bone.update(timeDiff));
         // Draw everything!
         this.ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
         this.anvils.forEach(anvil => anvil.render(this.ctx));
         this.boxes.forEach(box => box.render(this.ctx));
         this.leftPlanes.forEach(plane => plane.render(this.ctx));
+        this.bones.forEach(bone => bone.render(this.ctx));
         this.barn.render(this.ctx);
         this.paradise.render(this.ctx);
         this.player.render(this.ctx);
@@ -475,9 +510,20 @@ class Engine {
                 delete this.leftPlanes[planeIdx];
             }
         });
+        this.bones.forEach((bone, boneIdx) => {
+            if (bone.y > GAME_HEIGHT || paradiseStart) {
+                delete this.bones[boneIdx];
+            }
+        });
         this.setupAnvils();
         this.setupBoxes();
         this.setupPlanes();
+        this.setupBones();
+
+        //  Check if the player picked up bones
+        if(this.didPlayerPickUpFood()) {
+            console.log("animation points++")
+        }
 
 
         // Check if player is dead
@@ -504,23 +550,37 @@ class Engine {
 
     didPlayerPickUpFood() {
         //  TODO: changer this.enemies par this.bouffe or something
-        // for (let i = 0; i < this.enemies.length; i++) {
-        //     if (this.enemies[i] == undefined) continue;
-        //     else if (
-        //         this.enemies[i].x < this.player.x + PLAYER_WIDTH &&
-        //         this.enemies[i].x + ENEMY_WIDTH > this.player.x &&
-        //         this.enemies[i].y < this.player.y + PLAYER_HEIGHT &&
-        //         this.enemies[i].y + ENEMY_HEIGHT > this.player.y) {
+        for (let i = 0; i < this.bones.length; i++) {
 
-        //         //console.log("DEAD")
+            if (this.bones[i] == undefined) continue;
+            
+            else if (
+                this.bones[i].x < this.player.x + PLAYER_WIDTH &&
+                this.bones[i].x + BONE_WIDTH > this.player.x &&
+                this.bones[i].y < this.player.y + PLAYER_HEIGHT &&
+                this.bones[i].y + BONE_HEIGHT > this.player.y) {
 
-        //         //this.stopScrollingLevel()
-        //         //return true;
-        //     }
-        // }
+                pointsLocationX = this.bones[i].x;
+                pointsLocationY = this.bones[i].y;
+                points = 1000;
+                displayPoints = true;
 
-
+                delete this.bones[i]
+                //  launch a function that will take the current coordinate and display score++ for a short amount of time
+                
+                return true;
+            }
+        }
         return false;
+    }
+
+    pointDisplay() {
+        
+        if(displayPoints) {
+            console.log(points, pointsLocationX, pointsLocationY)
+            this.ctx.fillText(points, pointsLocationX, pointsLocationY);
+        }
+        
     }
 
     isPlayerDead() {
@@ -533,9 +593,9 @@ class Engine {
                 this.anvils[i].y < this.player.y + PLAYER_HEIGHT &&
                 this.anvils[i].y + ANVIL_HEIGHT > this.player.y) {
 
-                console.log("DEAD")
-                this.stopScrollingLevel()
-                return true;
+                //console.log("DEAD")
+                // this.stopScrollingLevel()
+                // return true;
             }
         }
         //  Planes
@@ -547,9 +607,9 @@ class Engine {
                 this.leftPlanes[i].y < this.player.y + PLANE_HEIGHT &&
                 this.leftPlanes[i].y + PLANE_HEIGHT > this.player.y) {
 
-                console.log("DEAD")
-                this.stopScrollingLevel()
-                return true;
+                //console.log("DEAD")
+                // this.stopScrollingLevel()
+                // return true;
             }
         }
         //  Box
@@ -561,9 +621,9 @@ class Engine {
                 this.boxes[i].y < this.player.y + BOX_HEIGHT &&
                 this.boxes[i].y + BOX_HEIGHT > this.player.y) {
 
-                console.log("DEAD")
-                this.stopScrollingLevel()
-                return true;
+                //console.log("DEAD")
+                // this.stopScrollingLevel()
+                // return true;
             }
         }
 
