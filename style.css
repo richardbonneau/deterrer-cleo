@@ -2,7 +2,7 @@
     z-index:-1;
     position: fixed;
     background:url("images/level.png");
-    animation: 7.0s scroll infinite linear;
+    animation: 8.0s scroll infinite linear;
     width: 450px;
     height: 500px;
 }
@@ -24,15 +24,19 @@
     }
 }
 canvas {
+
     background: transparent;
     left: 100%;
 }
+
 .container {
+    
     width: 450px;
     height: 500px;
 }
 body {
-    background: black;
+    
+    background:#BEE0FE;
 }
 
 

@@ -2,44 +2,52 @@
 var GAME_WIDTH = 450;
 var GAME_HEIGHT = 500;
 
-var PLAYER_WIDTH = 40;
-var PLAYER_HEIGHT = 80;
+var PLAYER_WIDTH = 60;
+var PLAYER_HEIGHT = 120;
 
 var ENEMY_WIDTH = 75;
 var ENEMY_HEIGHT = 75;
-var MAX_ENEMIES = 1;
+var MAX_ENEMIES = 0;
 
 var ANVIL_WIDTH = 75;
 var ANVIL_HEIGHT = 35;
-var MAX_ANVILS = 1;
+var MAX_ANVILS = 0;
 
 var BOX_WIDTH = 50;
 var BOX_HEIGHT = 70;
-var MAX_BOXES = 1;
+var MAX_BOXES = 0;
 
 var BONE_WIDTH = 75;
 var BONE_HEIGHT = 100;
-var MAX_BONES = 1;
+var MAX_BONES = 0
 
-var FOOD_WIDTH = 75;
-var FOOD_HEIGHT = 100;
-var MAX_FOODS = 1;
 
-var PLANE_WIDTH = 145;
-var PLANE_HEIGHT = 50;
-var MAX_PLANES = 1;
+var PLANE_WIDTH = 150;
+var PLANE_HEIGHT = 80;
+var MAX_PLANES = 0;
 
 
 //  Start and Finish
 var BARN_WIDTH = 450;
-var BARN_HEIGHT = 125;
+var BARN_HEIGHT = 300;
 var PARADISE_WIDTH = 450;
 var PARADISE_HEIGHT = 300;
 
+//  Cleo fade in
+var cleoAppears = true;
+var stage1 = false;
+var stage2 = false;
+var stage3 = false;
+var stage4 = false;
+
+//  Start and End of level
 var barnStart = false;
 var paradiseStart = false;
 
 var didPlayerWinGame = false;
+
+//  StartTime
+var startTime = 0;
 
 
 //  Levels
@@ -78,9 +86,9 @@ var images = {};
 [
     "level.png", "barn.png", "paradise.png",
 
-    "player.png",
+    "player.png", "cleo-fadein-1.png", "cleo-fadein-2.png", "cleo-fadein-3.png", "cleo-fadein-4.png",
 
-    "bouffe-parachute.png", "bone-parachute.png", "tuque.png",
+    "bouffe-parachute.png", "bone-parachute.png", "tuque-parachute.png",
 
     "bombe-parachute.png", "spike-parachute.png", "anvil.png", "box.png",
 
@@ -95,11 +103,18 @@ var images = {};
 
 
 // This section is where you will be doing most of your coding
+
 class Player {
     constructor() {
-        this.x = 4 * PLAYER_WIDTH;
-        this.y = GAME_HEIGHT - PLAYER_HEIGHT - 5;
+        this.x = 2.5 * PLAYER_WIDTH;
+        this.y = GAME_HEIGHT - PLAYER_HEIGHT - 100;
+        this.stage1 = images['cleo-fadein-1.png'];
+        this.stage2 = images['cleo-fadein-2.png'];
+        this.stage3 = images['cleo-fadein-3.png'];
+        this.stage4 = images['cleo-fadein-4.png'];
+
         this.sprite = images['player.png'];
+
         this.speed = 0.2;
     }
     // This method is called by the game engine when left/right arrows are pressed
@@ -121,7 +136,21 @@ class Player {
         this.y = this.y + timeDiff * this.speed;
     }
     render(ctx) {
-        ctx.drawImage(this.sprite, this.x, this.y);
+        if (barnStart) {
+
+            ctx.drawImage(this.sprite, this.x, this.y);
+        } else if (cleoAppears) {
+            if (stage1) {
+                ctx.drawImage(this.stage1, this.x, this.y);
+            } else if (stage2) {
+                ctx.drawImage(this.stage2, this.x, this.y);
+            } else if (stage3) {
+                ctx.drawImage(this.stage3, this.x, this.y);
+            } else if (stage4) {
+                ctx.drawImage(this.stage4, this.x, this.y);
+            }
+        }
+
     }
 }
 class Anvil {
@@ -194,7 +223,7 @@ class Barn {
         this.x = 0;
         this.y = GAME_HEIGHT - BARN_HEIGHT;
         this.sprite = images['barn.png'];
-        this.speed = 0.05;
+        this.speed = 0.2;
     }
 
     // This method is called by the game engine when left/right arrows are pressed
@@ -212,7 +241,7 @@ class Paradise {
         this.x = 0;
         this.y = 0 - PARADISE_HEIGHT;
         this.sprite = images['paradise.png'];
-        this.speed = 0.1;
+        this.speed = 0.15;
     }
 
     update(timeDiff) {
@@ -237,7 +266,7 @@ class Engine {
         this.player = new Player();
         this.barn = new Barn();
         this.paradise = new Paradise();
-        
+
 
         // Setup enemies, making sure there are always three
         this.setupAnvils();
@@ -367,14 +396,24 @@ class Engine {
 
         this.bones[boneSpot] = new Bone(boneSpot * BONE_WIDTH);
     }
+    stopSpawningEverything() {
+        MAX_ANVILS = 0;
+        MAX_BOXES = 0;
+        MAX_BONES = 0;
+        MAX_PLANES = 0;
+
+    }
 
     stopScrollingLevel() {
+        this.stopSpawningEverything();
         document.getElementById("background").style.animationPlayState = "paused"
     }
 
     // This method kicks off the game
     start() {
+
         this.score = 0;
+        startTime = Date.now();
         this.lastFrame = Date.now();
 
 
@@ -427,7 +466,6 @@ class Engine {
             }
         })
 
-
         this.gameLoop();
     }
 
@@ -442,9 +480,35 @@ class Engine {
     You should use this parameter to scale your update appropriately
      */
     gameLoop() {
+
         // Check how long it's been since last frame
         var currentFrame = Date.now();
         var timeDiff = currentFrame - this.lastFrame;
+        var timeElapsed = -startTime + currentFrame;
+
+
+        if (timeElapsed < 1000) {
+            stage1 = true;
+            stage2 = false;
+            stage2 = false;
+            stage2 = false;
+        } else if (timeElapsed < 1500) {
+            stage1 = false;
+            stage2 = true;
+            stage3 = false;
+            stage4 = false;
+        } else if (timeElapsed < 2000) {
+            stage1 = false;
+            stage2 = false;
+            stage3 = true;
+            stage4 = false;
+        } else if (timeElapsed < 2500) {
+            stage1 = false;
+            stage2 = false;
+            stage3 = false;
+            stage4 = true;
+        }
+
 
         //  Update the player's positon if needed
         if (playerMoveLeft === true) {
@@ -521,7 +585,7 @@ class Engine {
         this.setupBones();
 
         //  Check if the player picked up bones
-        if(this.didPlayerPickUpFood()) {
+        if (this.didPlayerPickUpFood()) {
             console.log("animation points++")
         }
 
@@ -553,7 +617,7 @@ class Engine {
         for (let i = 0; i < this.bones.length; i++) {
 
             if (this.bones[i] == undefined) continue;
-            
+
             else if (
                 this.bones[i].x < this.player.x + PLAYER_WIDTH &&
                 this.bones[i].x + BONE_WIDTH > this.player.x &&
@@ -567,20 +631,20 @@ class Engine {
 
                 delete this.bones[i]
                 //  launch a function that will take the current coordinate and display score++ for a short amount of time
-                
+
                 return true;
             }
         }
         return false;
     }
 
-    pointDisplay() {
-        
-        if(displayPoints) {
+    pointDisplay() {
+
+        if (displayPoints) {
             console.log(points, pointsLocationX, pointsLocationY)
             this.ctx.fillText(points, pointsLocationX, pointsLocationY);
         }
-        
+
     }
 
     isPlayerDead() {
@@ -631,8 +695,6 @@ class Engine {
         return false;
     }
 }
-
-
 
 
 
