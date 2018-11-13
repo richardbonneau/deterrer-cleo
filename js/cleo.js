@@ -23,14 +23,13 @@ var ANVIL_WIDTH = 75;
 var ANVIL_HEIGHT = 35;
 var MAX_ANVILS = 0;
 
-var BOX_WIDTH = 50;
-var BOX_HEIGHT = 70;
+var BOX_WIDTH = 80;
+var BOX_HEIGHT = 80;
 var MAX_BOXES = 0;
 
 var BONE_WIDTH = 75;
 var BONE_HEIGHT = 87;
 var MAX_BONES = 0;
-
 
 var PLANE_WIDTH = 150;
 var PLANE_HEIGHT = 80;
@@ -90,6 +89,17 @@ var points = 0;
 var pointsLocationX = 0;
 var pointsLocationY = 0;
 
+//  Coins and Enemies Throttle
+
+//      DiceRoll
+var bonesDiceRoll = 0;
+//      Nb of allowed items for this level
+var nbAllowedBones = 0;
+
+var amountsAllowedItemsAreSet = false;
+var isLevelFreeOfBones = false;
+
+
 //  Preload game images
 var images = {};
 [
@@ -115,8 +125,6 @@ var bonePickup = new Audio("audio/bone-pickup.wav");
 
 
 // This section is where you will be doing most of your coding
-
-
 class StartButton {
     constructor() {
         this.sprite = images['start-button.png'];
@@ -462,6 +470,8 @@ class Engine {
 
         this.lastFrame = Date.now();
 
+        setInterval(function () { bonesDiceRoll = Math.floor(Math.random() * 100 + 1) }, 500);
+
 
         // Listen for keyboard left/right and update the player
         document.addEventListener('keydown', down => {
@@ -494,6 +504,7 @@ class Engine {
             if (down.keyCode === 32) {
                 barnStart = true;
                 MAX_BONES = 2;
+                MAX_BOXES = 2;
                 document.getElementById("background").classList.remove("background-start")
                 document.getElementById("background").classList.add("background")
             }
@@ -539,6 +550,7 @@ class Engine {
      */
     gameLoop() {
 
+
         // Check how long it's been since last frame
         var currentFrame = Date.now();
         var timeDiff = currentFrame - this.lastFrame;
@@ -571,10 +583,25 @@ class Engine {
             document.getElementById("background").classList.add("background")
         }
 
-        if (timeElapsed > 10000) {
-            MAX_BONES = 1;
-            MAX_BOXES = 1;
+        if (timeElapsed < 10000) {
+        } else if (timeElapsed < 11000) {
+            if (!amountsAllowedItemsAreSet) {
+                nbAllowedBones = 4;
+            }
+
+            if (nbAllowedBones !== 0 && isLevelFreeOfBones && bonesDiceRoll < 10) {
+                console.log("smaller than 10")
+
+                MAX_BONES = 1;
+                MAX_BOXES = 0;
+            }
+
+
+        } else if (timeElapsed < 20000) {
+            MAX_BONES = 0
         }
+
+
 
 
         //  Update the player's positon if needed
@@ -704,7 +731,9 @@ class Engine {
                 points = 1000;
                 displayPoints = true;
 
+                MAX_BONES = 0;
                 delete this.bones[i]
+
                 //  launch a function that will take the current coordinate and display score++ for a short amount of time
 
                 return true;
@@ -715,7 +744,7 @@ class Engine {
 
     pointDisplay() {
         if (displayPoints) {
-            console.log(points, pointsLocationX, pointsLocationY)
+            //console.log(points, pointsLocationX, pointsLocationY)
             this.ctx.fillText(points, pointsLocationX, pointsLocationY);
         }
 
@@ -731,7 +760,7 @@ class Engine {
                 this.anvils[i].y < this.player.y + PLAYER_HEIGHT &&
                 this.anvils[i].y + ANVIL_HEIGHT > this.player.y) {
 
-                //console.log("DEAD")
+                console.log("DEAD")
                 // this.stopScrollingLevel()
                 // return true;
             }
@@ -745,7 +774,7 @@ class Engine {
                 this.leftPlanes[i].y < this.player.y + PLANE_HEIGHT &&
                 this.leftPlanes[i].y + PLANE_HEIGHT > this.player.y) {
 
-                //console.log("DEAD")
+                console.log("DEAD")
                 // this.stopScrollingLevel()
                 // return true;
             }
@@ -759,13 +788,11 @@ class Engine {
                 this.boxes[i].y < this.player.y + BOX_HEIGHT &&
                 this.boxes[i].y + BOX_HEIGHT > this.player.y) {
 
-                //console.log("DEAD")
+                console.log("DEAD")
                 // this.stopScrollingLevel()
                 // return true;
             }
         }
-
-
         return false;
     }
 }
