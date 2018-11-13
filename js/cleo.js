@@ -2,8 +2,18 @@
 var GAME_WIDTH = 450;
 var GAME_HEIGHT = 500;
 
-var PLAYER_WIDTH = 60;
-var PLAYER_HEIGHT = 120;
+//  Start Button
+var displayStartButton = true;
+var buttonX = 125;
+var buttonY = 130;
+var buttonW = 225;
+var buttonH = 40;
+
+//  Pause Game
+var isGamePaused = false;
+
+var PLAYER_WIDTH = 58;
+var PLAYER_HEIGHT = 90;
 
 var ENEMY_WIDTH = 75;
 var ENEMY_HEIGHT = 75;
@@ -18,14 +28,13 @@ var BOX_HEIGHT = 70;
 var MAX_BOXES = 0;
 
 var BONE_WIDTH = 75;
-var BONE_HEIGHT = 100;
-var MAX_BONES = 0
+var BONE_HEIGHT = 87;
+var MAX_BONES = 0;
 
 
 var PLANE_WIDTH = 150;
 var PLANE_HEIGHT = 80;
 var MAX_PLANES = 0;
-
 
 //  Start and Finish
 var BARN_WIDTH = 450;
@@ -47,7 +56,7 @@ var paradiseStart = false;
 var didPlayerWinGame = false;
 
 //  StartTime
-var startTime = 0;
+var startTime = 9999999999999999;
 
 
 //  Levels
@@ -84,6 +93,8 @@ var pointsLocationY = 0;
 //  Preload game images
 var images = {};
 [
+    "start-button.png",
+
     "level.png", "barn.png", "paradise.png",
 
     "player.png", "cleo-fadein-1.png", "cleo-fadein-2.png", "cleo-fadein-3.png", "cleo-fadein-4.png",
@@ -99,10 +110,23 @@ var images = {};
     img.src = 'images/' + imgName;
     images[imgName] = img;
 });
+var bonePickup = new Audio("audio/bone-pickup.wav");
 
 
 
 // This section is where you will be doing most of your coding
+
+
+class StartButton {
+    constructor() {
+        this.sprite = images['start-button.png'];
+    }
+    render(ctx) {
+        if (displayStartButton) {
+            ctx.drawImage(this.sprite, buttonX, buttonY)
+        }
+    }
+}
 
 class Player {
     constructor() {
@@ -150,7 +174,6 @@ class Player {
                 ctx.drawImage(this.stage4, this.x, this.y);
             }
         }
-
     }
 }
 class Anvil {
@@ -260,19 +283,21 @@ This section is a tiny game engine.
 This engine will use your Enemy and Player classes to create the behavior of the game.
 The engine will try to draw your game at 60 frames per second using the requestAnimationFrame function
 */
+//  ENGINECLASS:
 class Engine {
     constructor(element) {
         // Setup the player
         this.player = new Player();
         this.barn = new Barn();
         this.paradise = new Paradise();
+        this.startButton = new StartButton();
 
 
-        // Setup enemies, making sure there are always three
+        // Setup enemies
+        this.addStartButton();
         this.setupAnvils();
         this.setupBoxes();
         this.setupPlanes();
-
         this.setupBones();
 
         // Setup the <canvas> element where we will be drawing
@@ -280,17 +305,35 @@ class Engine {
         canvas.width = GAME_WIDTH;
         canvas.height = GAME_HEIGHT;
         element.appendChild(canvas);
-
         this.ctx = canvas.getContext('2d');
 
-        // Since gameLoop will be called out of context, bind it once here.
+        //  STARTBUTTON:
+        canvas.addEventListener('click', function (event) {
+            // NOTE: This assumes canvas element is positioned at top left corner 
+            if (
+                event.x > buttonX &&
+                event.x < buttonX + buttonW &&
+                event.y > buttonY &&
+                event.y < buttonY + buttonH
+            ) {
+                // Executes if button was clicked!
+                displayStartButton = false;
+                startTime = Date.now();
+            }
+        });
+
+
         this.gameLoop = this.gameLoop.bind(this);
     }
+
+
 
     /*
      The game allows for 5 horizontal slots where an enemy can be present.
      At any point in time there can be at most MAX_ENEMIES enemies otherwise the game would be impossible
      */
+
+
     setupAnvils() {
         if (!this.anvils) {
             this.anvils = [];
@@ -339,6 +382,9 @@ class Engine {
     }
 
     // This method finds a random spot where there is no enemy, and puts one in there
+    addStartButton() {
+        this.startButton = new StartButton(buttonW);
+    }
     addAnvil() {
         var anvilSpots = GAME_WIDTH / ANVIL_WIDTH;
 
@@ -413,7 +459,7 @@ class Engine {
     start() {
 
         this.score = 0;
-        startTime = Date.now();
+
         this.lastFrame = Date.now();
 
 
@@ -441,10 +487,13 @@ class Engine {
                 playerMoveDown = false;
             }
         })
+
+
         // Space
         document.addEventListener("keydown", down => {
             if (down.keyCode === 32) {
                 barnStart = true;
+                MAX_BONES = 2;
                 document.getElementById("background").classList.remove("background-start")
                 document.getElementById("background").classList.add("background")
             }
@@ -453,6 +502,15 @@ class Engine {
         document.addEventListener("keydown", down => {
             if (down.keyCode === 17) {
                 paradiseStart = true;
+            }
+        })
+        // P
+        document.addEventListener("keydown", down => {
+            if (down.keyCode === 80) {
+                if (isGamePaused === false) {
+                    isGamePaused = true;
+                } else isGamePaused = false;
+
             }
         })
 
@@ -492,21 +550,30 @@ class Engine {
             stage2 = false;
             stage2 = false;
             stage2 = false;
-        } else if (timeElapsed < 1500) {
+        } else if (timeElapsed < 2000) {
             stage1 = false;
             stage2 = true;
             stage3 = false;
             stage4 = false;
-        } else if (timeElapsed < 2000) {
+        } else if (timeElapsed < 3000) {
             stage1 = false;
             stage2 = false;
             stage3 = true;
             stage4 = false;
-        } else if (timeElapsed < 2500) {
+        } else if (timeElapsed < 4000) {
             stage1 = false;
             stage2 = false;
             stage3 = false;
             stage4 = true;
+        } else if (timeElapsed > 5000) {
+            barnStart = true;
+            document.getElementById("background").classList.remove("background-start")
+            document.getElementById("background").classList.add("background")
+        }
+
+        if (timeElapsed > 10000) {
+            MAX_BONES = 1;
+            MAX_BOXES = 1;
         }
 
 
@@ -538,17 +605,21 @@ class Engine {
         }
 
         // Score
-        this.score += timeDiff;
+        //this.score += timeDiff;
 
         this.pointDisplay()
 
         // Call update on all game elements
-        this.anvils.forEach(anvil => anvil.update(timeDiff));
-        this.boxes.forEach(box => box.update(timeDiff));
-        this.leftPlanes.forEach(plane => plane.update(timeDiff));
-        this.bones.forEach(bone => bone.update(timeDiff));
+        if (!isGamePaused) {
+            this.anvils.forEach(anvil => anvil.update(timeDiff));
+            this.boxes.forEach(box => box.update(timeDiff));
+            this.leftPlanes.forEach(plane => plane.update(timeDiff));
+            this.bones.forEach(bone => bone.update(timeDiff));
+        }
+
         // Draw everything!
         this.ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
         this.anvils.forEach(anvil => anvil.render(this.ctx));
         this.boxes.forEach(box => box.render(this.ctx));
         this.leftPlanes.forEach(plane => plane.render(this.ctx));
@@ -556,6 +627,7 @@ class Engine {
         this.barn.render(this.ctx);
         this.paradise.render(this.ctx);
         this.player.render(this.ctx);
+        this.startButton.render(this.ctx);
 
 
         // Check if any enemies should die
@@ -624,6 +696,9 @@ class Engine {
                 this.bones[i].y < this.player.y + PLAYER_HEIGHT &&
                 this.bones[i].y + BONE_HEIGHT > this.player.y) {
 
+                this.score += 1000
+                bonePickup.play();
+
                 pointsLocationX = this.bones[i].x;
                 pointsLocationY = this.bones[i].y;
                 points = 1000;
@@ -639,7 +714,6 @@ class Engine {
     }
 
     pointDisplay() {
-
         if (displayPoints) {
             console.log(points, pointsLocationX, pointsLocationY)
             this.ctx.fillText(points, pointsLocationX, pointsLocationY);
