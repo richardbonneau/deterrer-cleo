@@ -54,6 +54,17 @@ var barnStart = false;
 var paradiseStart = false;
 var didPlayerWinGame = false;
 
+var gameOver = true;
+var cleo1 = true;
+var cleo2 = false;
+var cleo3 = false;
+var cleo4 = false;
+var cleo5 = false;
+var cleo6 = false;
+
+
+var gameOverCycleStarted = false;
+
 //  StartTime
 var startTime = 9999999999999999;
 
@@ -119,6 +130,8 @@ var images = {};
 
     "boule-neige.png", "plane-right.png", "plane-left.png",
 
+    "black-screen.png", "gameover1.png", "gameover2.png", "gameover3.png", "gameover4.png", "gameover5.png", "gameover6.png",
+
 ].forEach(imgName => {
     var img = document.createElement('img');
     img.src = 'images/' + imgName;
@@ -156,7 +169,7 @@ class Player {
         this.stage5 = images['cleo-fadein-5.png'];
         this.sprite = images['player.png'];
 
-        this.speed = 0.2;
+        this.speed = 0.25;
     }
     // This method is called by the game engine when left/right arrows are pressed
     move(direction) {
@@ -474,19 +487,17 @@ class Engine {
         document.getElementById("background").style.animationPlayState = "paused"
     }
 
+    cycleGameOverScreens() {
+
+    }
+
     // This method kicks off the game
     start() {
-
-
         this.score = 0;
-
         this.lastFrame = Date.now();
-
 
         music.loop = true;
         music.volume = 0.5;
-
-
 
 
         // Listen for keyboard left/right and update the player
@@ -514,7 +525,6 @@ class Engine {
             }
         })
 
-
         // Space
         document.addEventListener("keydown", down => {
             if (down.keyCode === 32) {
@@ -536,8 +546,11 @@ class Engine {
         // P
         document.addEventListener("keydown", down => {
             if (down.keyCode === 80) {
-                stage4 = false;
-                barnStart = true;
+                document.getElementById("background").classList.remove("background-start")
+                document.getElementById("background").classList.add("fadein")
+
+                // stage4 = false;
+                // barnStart = true;
 
                 // if (isGamePaused === false) {
                 //     isGamePaused = true;
@@ -570,7 +583,7 @@ class Engine {
     You should use this parameter to scale your update appropriately
      */
     gameLoop() {
-
+        console.log(MAX_PLANES)
 
         // Check how long it's been since last frame
         var currentFrame = Date.now();
@@ -600,7 +613,6 @@ class Engine {
                 document.getElementById("background").classList.remove("background-start")
                 document.getElementById("background").classList.add("background")
             }
-
         }
 
         //  GAMEPLAY:/
@@ -620,13 +632,11 @@ class Engine {
                 arePlanesSpawning = true;
                 MAX_PLANES = 1;
             }
-
         } else if (timeElapsed < 90000) {
             if (!areAnvilsSpawning) {
                 areAnvilsSpawning = true;
                 MAX_ANVILS = 1;
             }
-
         } else if (timeElapsed < 120000) {
             paradiseStart = true;
         }
@@ -647,20 +657,18 @@ class Engine {
         }
 
 
-
         //  Checks if we're at the start or end of the level
         if (barnStart === true) {
             this.barn.update(timeDiff);
         }
         if (paradiseStart === true) {
+            this.stopSpawningEverything();
             this.paradise.update(timeDiff);
             if (this.paradise.y >= 0) {
                 didPlayerWinGame = true;
             }
         }
 
-        // Score
-        //this.score += timeDiff;
 
         this.pointDisplay()
 
@@ -683,6 +691,41 @@ class Engine {
         this.paradise.render(this.ctx);
         this.player.render(this.ctx);
         this.startButton.render(this.ctx);
+        if (gameOver) {
+            this.ctx.drawImage(images['black-screen.png'], 0, 0)
+            if (cleo1) this.ctx.drawImage(images['gameover1.png'], GAME_WIDTH / 2 - 150, 20)
+            else if (cleo2) this.ctx.drawImage(images['gameover2.png'], GAME_WIDTH / 2 - 150, 20)
+            else if (cleo3) this.ctx.drawImage(images['gameover3.png'], GAME_WIDTH / 2 - 150, 20)
+            else if (cleo4) this.ctx.drawImage(images['gameover4.png'], GAME_WIDTH / 2 - 150, 20)
+            else if (cleo5) this.ctx.drawImage(images['gameover5.png'], GAME_WIDTH / 2 - 150, 20)
+            else if (cleo6) this.ctx.drawImage(images['gameover6.png'], GAME_WIDTH / 2 - 150, 20)
+
+            if (!gameOverCycleStarted) {
+                var cycle = setInterval(function () {
+                    if (cleo1) {
+                        cleo2 = true
+                        cleo1 = false
+                    } else if (cleo2) {
+                        cleo2 = false
+                        cleo3 = true
+                    } else if (cleo3) {
+                        cleo3 = false
+                        cleo4 = true
+                    } else if (cleo4) {
+                        cleo4 = false
+                        cleo5 = true
+                    } else if (cleo5) {
+                        cleo5 = false
+                        cleo6 = true
+                    } else if (cleo6) {
+                        cleo6 = false
+                        cleo1 = true
+                    }
+                }, 250)
+                gameOverCycleStarted = true;
+            }
+        }
+
 
 
         // REACHBOTTOM:/
@@ -703,6 +746,7 @@ class Engine {
             if (plane.x > GAME_WIDTH || paradiseStart) {
                 delete this.leftPlanes[planeIdx];
                 if (level1) {
+                    MAX_PLANES = 0;
                     setTimeout(() => MAX_PLANES = 1, Math.floor(Math.random() * 5000 + 5000))
                 }
             }
@@ -784,11 +828,14 @@ class Engine {
         }
         return false;
     }
-
+    //  POINTS:/
     pointDisplay() {
         if (displayPoints) {
             //console.log(points, pointsLocationX, pointsLocationY)
-            this.ctx.fillText(points, pointsLocationX, pointsLocationY);
+            if (!gameOver) {
+                this.ctx.fillText(points, pointsLocationX, pointsLocationY);
+            }
+
         }
 
     }
