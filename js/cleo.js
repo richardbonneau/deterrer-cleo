@@ -42,16 +42,16 @@ var PARADISE_WIDTH = 450;
 var PARADISE_HEIGHT = 300;
 
 //  Cleo fade in
-var cleoAppears = true;
 var stage1 = false;
 var stage2 = false;
 var stage3 = false;
 var stage4 = false;
+var stage5 = false;
+var stage6 = false;
 
 //  Start and End of level
 var barnStart = false;
 var paradiseStart = false;
-
 var didPlayerWinGame = false;
 
 //  StartTime
@@ -59,12 +59,16 @@ var startTime = 9999999999999999;
 
 
 //  Levels
-var level0 = true;
-var level1 = false;
+
+var level1 = true;
 var level2 = false;
 var level3 = false;
 var level4 = false;
 
+var areBonesSpawning = false;
+var areBoxesSpawning = false;
+var arePlanesSpawning = false;
+var areAnvilsSpawning = false;
 
 //  Player Movement
 var playerMoveLeft = false;
@@ -91,8 +95,8 @@ var pointsLocationY = 0;
 
 //  Coins and Enemies Throttle
 
-//      DiceRoll
-var bonesDiceRoll = 0;
+//      DEBUG
+var timeElapsedDebug = false;
 //      Nb of allowed items for this level
 var nbAllowedBones = 0;
 
@@ -107,7 +111,7 @@ var images = {};
 
     "level.png", "barn.png", "paradise.png",
 
-    "player.png", "cleo-fadein-1.png", "cleo-fadein-2.png", "cleo-fadein-3.png", "cleo-fadein-4.png",
+    "player.png", "cleo-fadein-1.png", "cleo-fadein-2.png", "cleo-fadein-3.png", "cleo-fadein-4.png", "cleo-fadein-5.png",
 
     "bouffe-parachute.png", "bone-parachute.png", "tuque-parachute.png",
 
@@ -120,7 +124,12 @@ var images = {};
     img.src = 'images/' + imgName;
     images[imgName] = img;
 });
+
+var music = new Audio("audio/music.wav");
+var woofStart = new Audio("audio/woof-woof-start.wav");
+var planeFlyBy = new Audio("audio/plane-fly-by.wav");
 var bonePickup = new Audio("audio/bone-pickup.wav");
+var die = new Audio("audio/die.wav");
 
 
 
@@ -144,7 +153,7 @@ class Player {
         this.stage2 = images['cleo-fadein-2.png'];
         this.stage3 = images['cleo-fadein-3.png'];
         this.stage4 = images['cleo-fadein-4.png'];
-
+        this.stage5 = images['cleo-fadein-5.png'];
         this.sprite = images['player.png'];
 
         this.speed = 0.2;
@@ -169,9 +178,8 @@ class Player {
     }
     render(ctx) {
         if (barnStart) {
-
             ctx.drawImage(this.sprite, this.x, this.y);
-        } else if (cleoAppears) {
+        } else {
             if (stage1) {
                 ctx.drawImage(this.stage1, this.x, this.y);
             } else if (stage2) {
@@ -180,6 +188,8 @@ class Player {
                 ctx.drawImage(this.stage3, this.x, this.y);
             } else if (stage4) {
                 ctx.drawImage(this.stage4, this.x, this.y);
+            } else if (stage5) {
+                ctx.drawImage(this.stage5, this.x, this.y);
             }
         }
     }
@@ -221,7 +231,7 @@ class Plane {
         this.x = spawnLeft ? -PLANE_WIDTH : GAME_WIDTH + PLANE_WIDTH;
         this.y = yPos;
         this.sprite = spawnLeft ? images['plane-right.png'] : images['plane-left.png'];
-        this.horizontalSpeed = Math.random() / 2 + 0.10;
+        this.horizontalSpeed = Math.random() / 4 + 0.02;
         this.verticalSpeed = (Math.random() - 0.5) / 10;
     }
     update(timeDiff) {
@@ -291,7 +301,7 @@ This section is a tiny game engine.
 This engine will use your Enemy and Player classes to create the behavior of the game.
 The engine will try to draw your game at 60 frames per second using the requestAnimationFrame function
 */
-//  ENGINECLASS:
+//  ENGINECLASS:/
 class Engine {
     constructor(element) {
         // Setup the player
@@ -315,7 +325,7 @@ class Engine {
         element.appendChild(canvas);
         this.ctx = canvas.getContext('2d');
 
-        //  STARTBUTTON:
+        //  STARTBUTTON:/
         canvas.addEventListener('click', function (event) {
             // NOTE: This assumes canvas element is positioned at top left corner 
             if (
@@ -327,6 +337,7 @@ class Engine {
                 // Executes if button was clicked!
                 displayStartButton = false;
                 startTime = Date.now();
+                music.play();
             }
         });
 
@@ -419,13 +430,13 @@ class Engine {
 
     addPlane() {
         var leftPlaneSpots = GAME_HEIGHT / PLANE_HEIGHT;
-
         var leftPlaneSpot;
         // Keep looping until we find a free spot at random
         while (leftPlaneSpot === undefined || this.leftPlanes[leftPlaneSpot]) {
             leftPlaneSpot = Math.floor(Math.random() * leftPlaneSpots);
         }
         this.leftPlanes[leftPlaneSpot] = new Plane(leftPlaneSpot * PLANE_HEIGHT, true);
+        planeFlyBy.play();
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //  TODO: ajouter right planes fait crasher le jeu
@@ -466,11 +477,16 @@ class Engine {
     // This method kicks off the game
     start() {
 
+
         this.score = 0;
 
         this.lastFrame = Date.now();
 
-        setInterval(function () { bonesDiceRoll = Math.floor(Math.random() * 100 + 1) }, 500);
+
+        music.loop = true;
+        music.volume = 0.5;
+
+
 
 
         // Listen for keyboard left/right and update the player
@@ -512,15 +528,20 @@ class Engine {
         // CTRL
         document.addEventListener("keydown", down => {
             if (down.keyCode === 17) {
+                // barnStart = false;
+                // stage4 = true;
                 paradiseStart = true;
             }
         })
         // P
         document.addEventListener("keydown", down => {
             if (down.keyCode === 80) {
-                if (isGamePaused === false) {
-                    isGamePaused = true;
-                } else isGamePaused = false;
+                stage4 = false;
+                barnStart = true;
+
+                // if (isGamePaused === false) {
+                //     isGamePaused = true;
+                // } else isGamePaused = false;
 
             }
         })
@@ -557,51 +578,58 @@ class Engine {
         var timeElapsed = -startTime + currentFrame;
 
 
-        if (timeElapsed < 1000) {
+        if (timeElapsed < 500) {
             stage1 = true;
-            stage2 = false;
-            stage2 = false;
-            stage2 = false;
-        } else if (timeElapsed < 2000) {
+        } else if (timeElapsed < 1000) {
             stage1 = false;
             stage2 = true;
-            stage3 = false;
-            stage4 = false;
-        } else if (timeElapsed < 3000) {
-            stage1 = false;
+        } else if (timeElapsed < 1500) {
             stage2 = false;
             stage3 = true;
-            stage4 = false;
-        } else if (timeElapsed < 4000) {
-            stage1 = false;
-            stage2 = false;
+        } else if (timeElapsed < 2000) {
             stage3 = false;
             stage4 = true;
-        } else if (timeElapsed > 5000) {
-            barnStart = true;
-            document.getElementById("background").classList.remove("background-start")
-            document.getElementById("background").classList.add("background")
+        } else if (timeElapsed < 2500) {
+            stage4 = false;
+            stage5 = true;
+        } else if (timeElapsed < 3000) {
+            if (barnStart === false) {
+                stage5 = false;
+                barnStart = true;
+                woofStart.play();
+                document.getElementById("background").classList.remove("background-start")
+                document.getElementById("background").classList.add("background")
+            }
+
         }
 
+        //  GAMEPLAY:/
         if (timeElapsed < 10000) {
-        } else if (timeElapsed < 11000) {
-            if (!amountsAllowedItemsAreSet) {
-                nbAllowedBones = 4;
-            }
-
-            if (nbAllowedBones !== 0 && isLevelFreeOfBones && bonesDiceRoll < 10) {
-                console.log("smaller than 10")
-
+        } else if (timeElapsed < 15000) {
+            if (!areBonesSpawning) {
+                areBonesSpawning = true;
                 MAX_BONES = 1;
-                MAX_BOXES = 0;
+            }
+        } else if (timeElapsed < 30000) {
+            if (!areBoxesSpawning) {
+                areBoxesSpawning = true;
+                MAX_BOXES = 1;
+            }
+        } else if (timeElapsed < 60000) {
+            if (!arePlanesSpawning) {
+                arePlanesSpawning = true;
+                MAX_PLANES = 1;
             }
 
+        } else if (timeElapsed < 90000) {
+            if (!areAnvilsSpawning) {
+                areAnvilsSpawning = true;
+                MAX_ANVILS = 1;
+            }
 
-        } else if (timeElapsed < 20000) {
-            MAX_BONES = 0
+        } else if (timeElapsed < 120000) {
+            paradiseStart = true;
         }
-
-
 
 
         //  Update the player's positon if needed
@@ -657,10 +685,13 @@ class Engine {
         this.startButton.render(this.ctx);
 
 
-        // Check if any enemies should die
+        // REACHBOTTOM:/
         this.anvils.forEach((anvil, anvilIdx) => {
             if (anvil.y > GAME_HEIGHT || paradiseStart) {
                 delete this.anvils[anvilIdx];
+                if (level1) {
+                    setTimeout(() => MAX_ANVILS = 1, Math.floor(Math.random() * 5000 + 5000))
+                }
             }
         });
         this.boxes.forEach((box, boxIdx) => {
@@ -671,11 +702,18 @@ class Engine {
         this.leftPlanes.forEach((plane, planeIdx) => {
             if (plane.x > GAME_WIDTH || paradiseStart) {
                 delete this.leftPlanes[planeIdx];
+                if (level1) {
+                    setTimeout(() => MAX_PLANES = 1, Math.floor(Math.random() * 5000 + 5000))
+                }
             }
         });
         this.bones.forEach((bone, boneIdx) => {
             if (bone.y > GAME_HEIGHT || paradiseStart) {
                 delete this.bones[boneIdx];
+                if (level1) {
+                    MAX_BONES = 0;
+                    setTimeout(() => MAX_BONES = 1, Math.floor(Math.random() * 5000 + 5000))
+                }
             }
         });
         this.setupAnvils();
@@ -711,10 +749,9 @@ class Engine {
         }
     }
 
+    //  PLAYER HIT ITEMS? :/
     didPlayerPickUpFood() {
-        //  TODO: changer this.enemies par this.bouffe or something
         for (let i = 0; i < this.bones.length; i++) {
-
             if (this.bones[i] == undefined) continue;
 
             else if (
@@ -732,6 +769,12 @@ class Engine {
                 displayPoints = true;
 
                 MAX_BONES = 0;
+
+                if (level1) {
+                    setTimeout(() => MAX_BONES = 1, Math.floor(Math.random() * 5000 + 5000))
+                }
+
+
                 delete this.bones[i]
 
                 //  launch a function that will take the current coordinate and display score++ for a short amount of time
@@ -789,6 +832,7 @@ class Engine {
                 this.boxes[i].y + BOX_HEIGHT > this.player.y) {
 
                 console.log("DEAD")
+                die.play();
                 // this.stopScrollingLevel()
                 // return true;
             }
@@ -796,7 +840,6 @@ class Engine {
         return false;
     }
 }
-
 
 
 // This section will start the game
