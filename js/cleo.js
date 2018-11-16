@@ -42,8 +42,8 @@ var BEANIE_WIDTH = 75;
 var BEANIE_HEIGHT = 100;
 var MAX_BEANIES = 0;
 
-var PLANE_WIDTH = 150;
-var PLANE_HEIGHT = 80;
+var PLANE_WIDTH = 140;
+var PLANE_HEIGHT = 60;
 var MAX_PLANES = 0;
 
 //  Start and Finish
@@ -116,7 +116,30 @@ var UP_ARROW_CODE = 38;
 var DOWN_ARROW_CODE = 40;
 
 //  Tuque PowerUp
+var isPlayerInPrePowerUp = false;
 var isPlayerPoweredUp = false;
+
+var prePowerupStage1 = false;
+var prePowerupStage2 = false;
+
+var powerupStage1 = false;
+var powerupStage2 = false;
+var powerupStage3 = false;
+var powerupStage4 = false;
+
+// var prePowerupLeftStage1 = false;
+// var prePowerupLeftStage2 = false;
+// var prePowerupLeftStage1 = false;
+// var prePowerupLeftStage2 = false;
+
+// var powerupLeftStage1 = false;
+// var powerupLeftStage2 = false;
+// var powerupLeftStage3 = false;
+// var powerupLeftStage4 = false;
+// var powerupRightStage1 = false;
+// var powerupRightStage2 = false;
+// var powerupRightStage3 = false;
+// var powerupRightStage4 = false;
 
 //  Points Display
 var displayPoints = false;
@@ -138,7 +161,7 @@ var isLevelFreeOfBones = false;
 //  Preload game images
 var images = {};
 [
-    "start-button.png", "recommencer.png",
+    "start-button.png", "title.png", "recommencer.png",
 
     "level.png", "barn.png", "paradise.png",
 
@@ -152,12 +175,10 @@ var images = {};
 
     "bone-parachute.png", "tuque-parachute.png",
 
-    "anvil.png", "box.png",
+    "anvil.png", "box.png", "plane-right.png",
 
-    "plane-right.png",
-
-    "black-screen-fadein1.png", "black-screen-fadein2.png", "black-screen-fadein3.png", "black-screen-fadein4.png",
     "fadein-to-gameover1.png", "fadein-to-gameover2.png", "fadein-to-gameover3.png",
+
     "black-screen.png", "gameover1.png", "gameover2.png", "gameover3.png", "gameover4.png", "gameover5.png", "gameover6.png",
 
 ].forEach(imgName => {
@@ -181,7 +202,7 @@ class StartButton {
     }
     render(ctx) {
         if (displayStartButton) {
-            ctx.drawImage(this.sprite, buttonX, buttonY)
+            ctx.drawImage(this.sprite, (GAME_WIDTH / 2) - 112, buttonY)
         }
     }
 }
@@ -199,10 +220,10 @@ class Player {
         this.spriteLeft = images['player-left.png'];
         this.spriteRight = images['player-right.png'];
 
-        this.spriteLeftTuque = images['player-left-tuque.png']
-        this.spriteLeftPrePowerup = images['player-left-prepowerup.png']
-        this.spriteRightTuque = images['player-right-tuque.png']
-        this.spriteRightPrePowerup = images['player-right-prepowerup.png']
+        // this.spriteLeftTuque = images['player-left-tuque.png']
+        // this.spriteLeftPrePowerup = images['player-left-prepowerup.png']
+        // this.spriteRightTuque = images['player-right-tuque.png']
+        // this.spriteRightPrePowerup = images['player-right-prepowerup.png']
 
         this.spriteLeftPowerup1 = images['player-left-powerup1.png']
         this.spriteLeftPowerup2 = images['player-left-powerup2.png']
@@ -240,17 +261,27 @@ class Player {
     render(ctx) {
         if (barnStart) {
             if (playerFaceLeft) {
-                if (isPlayerInPrePowerUp) {
-
+                if (isPlayerPoweredUp) {
+                    if (powerupStage1) ctx.drawImage(images['player-left-powerup1.png'], this.x, this.y)
+                    else if (powerupStage2) ctx.drawImage(images['player-left-powerup2.png'], this.x, this.y)
+                    else if (powerupStage3) ctx.drawImage(images['player-left-powerup3.png'], this.x, this.y)
+                    else if (powerupStage4) ctx.drawImage(images['player-left-powerup4.png'], this.x, this.y)
                 }
                 else {
                     ctx.drawImage(this.spriteLeft, this.x, this.y);
                 }
 
             } else if (playerFaceRight) {
-                ctx.drawImage(this.spriteRight, this.x, this.y);
-            }
+                if (isPlayerPoweredUp) {
+                    if (powerupStage1) ctx.drawImage(images['player-right-powerup1.png'], this.x, this.y)
+                    else if (powerupStage2) ctx.drawImage(images['player-right-powerup2.png'], this.x, this.y)
+                    else if (powerupStage3) ctx.drawImage(images['player-right-powerup3.png'], this.x, this.y)
+                    else if (powerupStage4) ctx.drawImage(images['player-right-powerup4.png'], this.x, this.y)
+                } else {
+                    ctx.drawImage(this.spriteRight, this.x, this.y);
+                }
 
+            }
         } else {
             if (stage1) {
                 ctx.drawImage(this.stage1, this.x, this.y);
@@ -338,7 +369,6 @@ class Beanie {
         this.speed = 0.1;
     }
     update(timeDiff) {
-        console.log(this.speed)
         this.y = this.y + timeDiff * this.speed;
     }
     render(ctx) {
@@ -360,7 +390,6 @@ class Barn {
     update(timeDiff) {
         this.y = this.y + timeDiff * this.speed;
     }
-
     render(ctx) {
         ctx.drawImage(this.sprite, this.x, this.y);
     }
@@ -381,7 +410,6 @@ class Paradise {
         ctx.drawImage(this.sprite, this.x, this.y);
     }
 }
-
 
 
 /*
@@ -417,12 +445,13 @@ class Engine {
         //  STARTBUTTON:/
         canvas.addEventListener('click', function (event) {
             rect = canvas.getBoundingClientRect()
-            if (!barnStart &&
+            if (!barnStart && displayStartButton &&
                 event.x - rect.x > buttonX &&
                 event.x - rect.x < buttonX + buttonW &&
                 event.y - rect.y > buttonY &&
                 event.y - rect.y < buttonY + buttonH
             ) {
+                console.log(displayStartButton)
                 // Executes if button was clicked!
                 displayStartButton = false;
                 startTime = Date.now();
@@ -437,11 +466,7 @@ class Engine {
                     location.reload();
                 }
             }
-
-
         });
-
-
         this.gameLoop = this.gameLoop.bind(this);
     }
 
@@ -455,7 +480,6 @@ class Engine {
         if (!this.anvils) {
             this.anvils = [];
         }
-
         while (this.anvils.filter(e => !!e).length < MAX_ANVILS) {
             this.addAnvil();
         }
@@ -465,7 +489,6 @@ class Engine {
         if (!this.boxes) {
             this.boxes = [];
         }
-
         while (this.boxes.filter(e => !!e).length < MAX_BOXES) {
             this.addBox();
         }
@@ -730,33 +753,30 @@ class Engine {
         }
 
         //  GAMEPLAY:/
-        if (timeElapsed < 10000) {
-            if (!areBeaniesSpawning) {
-                areBeaniesSpawning = true;
-                MAX_BEANIES = 5;
-            }
+        if (timeElapsed < 8000) {
 
-        } else if (timeElapsed < 15000) {
+
+        } else if (timeElapsed < 12000) {
             if (!areBonesSpawning) {
                 areBonesSpawning = true;
                 MAX_BONES = 1;
             }
-        } else if (timeElapsed < 20000) {
+        } else if (timeElapsed < 15000) {
             if (!areBeaniesSpawning) {
                 areBeaniesSpawning = true;
                 MAX_BEANIES = 1;
             }
-        } else if (timeElapsed < 30000) {
+        } else if (timeElapsed < 25000) {
             if (!areBoxesSpawning) {
                 areBoxesSpawning = true;
                 MAX_BOXES = 1;
             }
-        } else if (timeElapsed < 60000) {
+        } else if (timeElapsed < 50000) {
             if (!arePlanesSpawning) {
                 arePlanesSpawning = true;
                 MAX_PLANES = 1;
             }
-        } else if (timeElapsed < 90000) {
+        } else if (timeElapsed < 75000) {
             if (!areAnvilsSpawning) {
                 areAnvilsSpawning = true;
                 MAX_ANVILS = 1;
@@ -805,7 +825,7 @@ class Engine {
             this.beanies.forEach(beanie => beanie.update(timeDiff));
         }
 
-        // Draw everything!
+        // Draw everything! DRAW:/
         this.ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
         this.anvils.forEach(anvil => anvil.render(this.ctx));
@@ -817,6 +837,9 @@ class Engine {
         this.paradise.render(this.ctx);
         this.player.render(this.ctx);
         this.startButton.render(this.ctx);
+
+        if (displayStartButton) this.ctx.drawImage(images['title.png'], GAME_WIDTH / 2 - 75, 0)
+        //this.ctx.drawImage(images['plane-right.png'], 100, 200)
 
 
         if (preGameOver) {
@@ -979,6 +1002,7 @@ class Engine {
         return false;
     }
     didPlayerPickUpBeanie() {
+        //console.log(powerupStage1, powerupStage2, powerupStage3, powerupStage4)
         for (let i = 0; i < this.beanies.length; i++) {
             if (this.beanies[i] == undefined) continue;
 
@@ -988,13 +1012,33 @@ class Engine {
                 this.beanies[i].y < this.player.y + PLAYER_HEIGHT &&
                 this.beanies[i].y + BEANIE_HEIGHT > this.player.y) {
 
-                this.score += 1000
+                this.score += 1000;
                 //beaniePickup.play();
-                isPlayerInPrePowerUp = true
+                isPlayerPoweredUp = true;
+                powerupStage1 = true;
+
+                let prePowerupInterval = setInterval(function () {
+                    console.log("in interval")
+                    if (powerupStage1) {
+                        powerupStage1 = false;
+                        powerupStage2 = true;
+                    } else if (powerupStage2) {
+                        powerupStage2 = false;
+                        powerupStage3 = true;
+                    } else if (powerupStage3) {
+                        powerupStage3 = false;
+                        powerupStage4 = true;
+                    } else if (powerupStage4) {
+                        powerupStage4 = false;
+                        powerupStage1 = true;
+                    }
+                }, 100)
+
                 setTimeout(function () {
-                    isPlayerInPrePowerUp = false;
-                    isPlayerPoweredUp = true;
-                }, 500)
+                    clearInterval(prePowerupInterval);
+                    isPlayerPoweredUp = false;
+
+                }, 10000)
 
                 pointsLocationX = this.beanies[i].x;
                 pointsLocationY = this.beanies[i].y;
@@ -1039,10 +1083,15 @@ class Engine {
                 this.anvils[i].y < this.player.y + PLAYER_HEIGHT &&
                 this.anvils[i].y + ANVIL_HEIGHT > this.player.y) {
 
-                console.log("DEAD")
-                gameOver = true;
-                // this.stopScrollingLevel()
-                // return true;
+                if (isPlayerPoweredUp) {
+                    delete this.anvils[i]
+                } else {
+                    console.log("DEAD")
+                    //gameOver = true;
+                    // this.stopScrollingLevel()
+                    // return true;
+                }
+
             }
         }
         //  Planes
@@ -1054,10 +1103,14 @@ class Engine {
                 this.leftPlanes[i].y < this.player.y + PLAYER_HEIGHT &&
                 this.leftPlanes[i].y + PLANE_HEIGHT > this.player.y) {
 
-                console.log("DEAD")
-                gameOver = true;
-                // this.stopScrollingLevel()
-                // return true;
+                if (isPlayerPoweredUp) {
+                    delete this.leftPlanes[i]
+                } else {
+                    console.log("DEAD")
+                    //gameOver = true;
+                    // this.stopScrollingLevel()
+                    // return true;
+                }
             }
         }
 
@@ -1071,11 +1124,14 @@ class Engine {
                 this.boxes[i].y + BOX_HEIGHT > this.player.y
             ) {
 
-                console.log("DEAD")
-                die.play();
-                gameOver = true;
-                // this.stopScrollingLevel()
-                // return true;
+                if (isPlayerPoweredUp) {
+                    delete this.boxes[i]
+                } else {
+                    console.log("DEAD")
+                    //gameOver = true;
+                    // this.stopScrollingLevel()
+                    // return true;
+                }
             }
         }
         return false;
