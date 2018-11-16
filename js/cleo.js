@@ -3,14 +3,21 @@ var GAME_WIDTH = 450;
 var GAME_HEIGHT = 500;
 
 //  Start Button
+var rect;
 var displayStartButton = true;
-var buttonX = 125;
-var buttonY = 130;
+
 var buttonW = 225;
 var buttonH = 40;
 
+var buttonX = 125;
+var buttonY = 130;
+var restartButtonX = 110;
+var restartButtonY = 350;
+
+
 //  Pause Game
 var isGamePaused = false;
+
 
 var PLAYER_WIDTH = 58;
 var PLAYER_HEIGHT = 90;
@@ -24,12 +31,16 @@ var ANVIL_HEIGHT = 35;
 var MAX_ANVILS = 0;
 
 var BOX_WIDTH = 80;
-var BOX_HEIGHT = 80;
+var BOX_HEIGHT = 70;
 var MAX_BOXES = 0;
 
 var BONE_WIDTH = 75;
 var BONE_HEIGHT = 87;
 var MAX_BONES = 0;
+
+var BEANIE_WIDTH = 75;
+var BEANIE_HEIGHT = 100;
+var MAX_BEANIES = 0;
 
 var PLANE_WIDTH = 150;
 var PLANE_HEIGHT = 80;
@@ -54,7 +65,6 @@ var barnStart = false;
 var paradiseStart = false;
 var didPlayerWinGame = false;
 
-var gameOver = true;
 var cleo1 = true;
 var cleo2 = false;
 var cleo3 = false;
@@ -62,26 +72,34 @@ var cleo4 = false;
 var cleo5 = false;
 var cleo6 = false;
 
+var cycle;
 
+var preGameOverBack1 = false;
+
+var preGameOver = false;
+var gameOver = false;
 var gameOverCycleStarted = false;
 
 //  StartTime
 var startTime = 9999999999999999;
 
-
 //  Levels
-
 var level1 = true;
 var level2 = false;
 var level3 = false;
 var level4 = false;
 
 var areBonesSpawning = false;
+var areBeaniesSpawning = false;
 var areBoxesSpawning = false;
 var arePlanesSpawning = false;
 var areAnvilsSpawning = false;
 
 //  Player Movement
+
+var playerFaceLeft = true;
+var playerFaceRight = false;
+
 var playerMoveLeft = false;
 var playerMoveRight = false;
 var playerMoveUp = false;
@@ -97,6 +115,8 @@ var RIGHT_ARROW_CODE = 39;
 var UP_ARROW_CODE = 38;
 var DOWN_ARROW_CODE = 40;
 
+//  Tuque PowerUp
+var isPlayerPoweredUp = false;
 
 //  Points Display
 var displayPoints = false;
@@ -118,18 +138,26 @@ var isLevelFreeOfBones = false;
 //  Preload game images
 var images = {};
 [
-    "start-button.png",
+    "start-button.png", "recommencer.png",
 
     "level.png", "barn.png", "paradise.png",
 
-    "player.png", "cleo-fadein-1.png", "cleo-fadein-2.png", "cleo-fadein-3.png", "cleo-fadein-4.png", "cleo-fadein-5.png",
+    "player-left.png", "player-right.png",
+    "player-left-tuque.png", "player-right-tuque.png", "player-left-prepowerup.png", "player-right-prepowerup.png",
 
-    "bouffe-parachute.png", "bone-parachute.png", "tuque-parachute.png",
+    "player-left-powerup1.png", "player-left-powerup2.png", "player-left-powerup3.png", "player-left-powerup4.png",
+    "player-right-powerup1.png", "player-right-powerup2.png", "player-right-powerup3.png", "player-right-powerup4.png",
 
-    "bombe-parachute.png", "spike-parachute.png", "anvil.png", "box.png",
+    "cleo-fadein-1.png", "cleo-fadein-2.png", "cleo-fadein-3.png", "cleo-fadein-4.png", "cleo-fadein-5.png",
 
-    "boule-neige.png", "plane-right.png", "plane-left.png",
+    "bone-parachute.png", "tuque-parachute.png",
 
+    "anvil.png", "box.png",
+
+    "plane-right.png",
+
+    "black-screen-fadein1.png", "black-screen-fadein2.png", "black-screen-fadein3.png", "black-screen-fadein4.png",
+    "fadein-to-gameover1.png", "fadein-to-gameover2.png", "fadein-to-gameover3.png",
     "black-screen.png", "gameover1.png", "gameover2.png", "gameover3.png", "gameover4.png", "gameover5.png", "gameover6.png",
 
 ].forEach(imgName => {
@@ -167,7 +195,23 @@ class Player {
         this.stage3 = images['cleo-fadein-3.png'];
         this.stage4 = images['cleo-fadein-4.png'];
         this.stage5 = images['cleo-fadein-5.png'];
-        this.sprite = images['player.png'];
+
+        this.spriteLeft = images['player-left.png'];
+        this.spriteRight = images['player-right.png'];
+
+        this.spriteLeftTuque = images['player-left-tuque.png']
+        this.spriteLeftPrePowerup = images['player-left-prepowerup.png']
+        this.spriteRightTuque = images['player-right-tuque.png']
+        this.spriteRightPrePowerup = images['player-right-prepowerup.png']
+
+        this.spriteLeftPowerup1 = images['player-left-powerup1.png']
+        this.spriteLeftPowerup2 = images['player-left-powerup2.png']
+        this.spriteLeftPowerup3 = images['player-left-powerup3.png']
+        this.spriteLeftPowerup4 = images['player-left-powerup4.png']
+        this.spriteRightPowerup1 = images['player-right-powerup1.png']
+        this.spriteRightPowerup2 = images['player-right-powerup2.png']
+        this.spriteRightPowerup3 = images['player-right-powerup3.png']
+        this.spriteRightPowerup4 = images['player-right-powerup4.png']
 
         this.speed = 0.25;
     }
@@ -175,8 +219,12 @@ class Player {
     move(direction) {
         if (direction === MOVE_LEFT) {
             playerMoveLeft = true;
+            playerFaceLeft = true;
+            playerFaceRight = false;
         } else if (direction === MOVE_RIGHT) {
             playerMoveRight = true;
+            playerFaceLeft = false;
+            playerFaceRight = true;
         } else if (direction === MOVE_UP) {
             playerMoveUp = true;
         } else if (direction === MOVE_DOWN) {
@@ -191,7 +239,18 @@ class Player {
     }
     render(ctx) {
         if (barnStart) {
-            ctx.drawImage(this.sprite, this.x, this.y);
+            if (playerFaceLeft) {
+                if (isPlayerInPrePowerUp) {
+
+                }
+                else {
+                    ctx.drawImage(this.spriteLeft, this.x, this.y);
+                }
+
+            } else if (playerFaceRight) {
+                ctx.drawImage(this.spriteRight, this.x, this.y);
+            }
+
         } else {
             if (stage1) {
                 ctx.drawImage(this.stage1, this.x, this.y);
@@ -271,6 +330,22 @@ class Bone {
     }
 }
 
+class Beanie {
+    constructor(xPos) {
+        this.x = xPos;
+        this.y = -BEANIE_HEIGHT;
+        this.sprite = images['tuque-parachute.png'];
+        this.speed = 0.1;
+    }
+    update(timeDiff) {
+        console.log(this.speed)
+        this.y = this.y + timeDiff * this.speed;
+    }
+    render(ctx) {
+        ctx.drawImage(this.sprite, this.x, this.y);
+    }
+}
+
 
 class Barn {
     constructor() {
@@ -330,6 +405,7 @@ class Engine {
         this.setupBoxes();
         this.setupPlanes();
         this.setupBones();
+        this.setupBeanies();
 
         // Setup the <canvas> element where we will be drawing
         var canvas = document.createElement('canvas');
@@ -340,25 +416,34 @@ class Engine {
 
         //  STARTBUTTON:/
         canvas.addEventListener('click', function (event) {
-            // NOTE: This assumes canvas element is positioned at top left corner 
-            if (
-                event.x > buttonX &&
-                event.x < buttonX + buttonW &&
-                event.y > buttonY &&
-                event.y < buttonY + buttonH
+            rect = canvas.getBoundingClientRect()
+            if (!barnStart &&
+                event.x - rect.x > buttonX &&
+                event.x - rect.x < buttonX + buttonW &&
+                event.y - rect.y > buttonY &&
+                event.y - rect.y < buttonY + buttonH
             ) {
                 // Executes if button was clicked!
                 displayStartButton = false;
                 startTime = Date.now();
                 music.play();
             }
+            if (gameOver &&
+                event.x - rect.x > restartButtonX &&
+                event.x - rect.x < restartButtonX + buttonW &&
+                event.y - rect.y > restartButtonY &&
+                event.y - rect.y < restartButtonY + buttonH) {
+                {
+                    location.reload();
+                }
+            }
+
+
         });
 
 
         this.gameLoop = this.gameLoop.bind(this);
     }
-
-
 
     /*
      The game allows for 5 horizontal slots where an enemy can be present.
@@ -410,6 +495,16 @@ class Engine {
 
         while (this.bones.filter(e => !!e).length < MAX_BONES) {
             this.addBone();
+        }
+    }
+
+    setupBeanies() {
+        if (!this.beanies) {
+            this.beanies = [];
+        }
+
+        while (this.beanies.filter(e => !!e).length < MAX_BEANIES) {
+            this.addBeanie();
         }
     }
 
@@ -474,9 +569,21 @@ class Engine {
 
         this.bones[boneSpot] = new Bone(boneSpot * BONE_WIDTH);
     }
+
+    addBeanie() {
+        var beanieSpots = GAME_WIDTH / BEANIE_WIDTH;
+
+        var beanieSpot;
+        // Keep looping until we find a free enemy spot at random
+        while (beanieSpot === undefined || this.beanies[beanieSpot]) {
+            beanieSpot = Math.floor(Math.random() * beanieSpots);
+        }
+        this.beanies[beanieSpot] = new Beanie(beanieSpot * BEANIE_WIDTH);
+    }
     stopSpawningEverything() {
         MAX_ANVILS = 0;
         MAX_BOXES = 0;
+        MAX_BEANIES = 0;
         MAX_BONES = 0;
         MAX_PLANES = 0;
 
@@ -493,24 +600,32 @@ class Engine {
 
     // This method kicks off the game
     start() {
-        this.score = 0;
+        this.score = 14500;
         this.lastFrame = Date.now();
 
         music.loop = true;
         music.volume = 0.5;
 
 
-        // Listen for keyboard left/right and update the player
-        document.addEventListener('keydown', down => {
-            if (down.keyCode === LEFT_ARROW_CODE) {
-                this.player.move(MOVE_LEFT);
-            } else if (down.keyCode === RIGHT_ARROW_CODE) {
-                this.player.move(MOVE_RIGHT);
-            } else if (down.keyCode === UP_ARROW_CODE) {
-                this.player.move(MOVE_UP);
-            } else if (down.keyCode === DOWN_ARROW_CODE) {
-                this.player.move(MOVE_DOWN);
+        // Movement:/
+        document.addEventListener('keydown', (down) => {
+            if (barnStart) {
+                if (down.keyCode === LEFT_ARROW_CODE) {
+                    this.player.move(MOVE_LEFT);
+                    down.preventDefault()
+                } else if (down.keyCode === RIGHT_ARROW_CODE) {
+                    this.player.move(MOVE_RIGHT);
+                    down.preventDefault()
+                } else if (down.keyCode === UP_ARROW_CODE) {
+                    this.player.move(MOVE_UP);
+                    down.preventDefault()
+                } else if (down.keyCode === DOWN_ARROW_CODE) {
+                    this.player.move(MOVE_DOWN);
+                    down.preventDefault()
+                }
             }
+
+
 
         });
         document.addEventListener("keyup", up => {
@@ -528,11 +643,12 @@ class Engine {
         // Space
         document.addEventListener("keydown", down => {
             if (down.keyCode === 32) {
-                barnStart = true;
-                MAX_BONES = 2;
-                MAX_BOXES = 2;
-                document.getElementById("background").classList.remove("background-start")
-                document.getElementById("background").classList.add("background")
+                // barnStart = true;
+                // MAX_BONES = 2;
+                // MAX_BOXES = 2;
+                // document.getElementById("background").classList.remove("background-start")
+                // document.getElementById("background").classList.add("background")
+                gameOver = false;
             }
         })
         // CTRL
@@ -577,14 +693,12 @@ class Engine {
     During each execution of the function, we will update the positions of all game entities
     It's also at this point that we will check for any collisions between the game entities
     Collisions will often indicate either a player death or an enemy kill
- 
+     
     In order to allow the game objects to self-determine their behaviors, gameLoop will call the `update` method of each entity
     To account for the fact that we don't always have 60 frames per second, gameLoop will send a time delta argument to `update`
     You should use this parameter to scale your update appropriately
      */
     gameLoop() {
-        console.log(MAX_PLANES)
-
         // Check how long it's been since last frame
         var currentFrame = Date.now();
         var timeDiff = currentFrame - this.lastFrame;
@@ -617,10 +731,20 @@ class Engine {
 
         //  GAMEPLAY:/
         if (timeElapsed < 10000) {
+            if (!areBeaniesSpawning) {
+                areBeaniesSpawning = true;
+                MAX_BEANIES = 5;
+            }
+
         } else if (timeElapsed < 15000) {
             if (!areBonesSpawning) {
                 areBonesSpawning = true;
                 MAX_BONES = 1;
+            }
+        } else if (timeElapsed < 20000) {
+            if (!areBeaniesSpawning) {
+                areBeaniesSpawning = true;
+                MAX_BEANIES = 1;
             }
         } else if (timeElapsed < 30000) {
             if (!areBoxesSpawning) {
@@ -678,6 +802,7 @@ class Engine {
             this.boxes.forEach(box => box.update(timeDiff));
             this.leftPlanes.forEach(plane => plane.update(timeDiff));
             this.bones.forEach(bone => bone.update(timeDiff));
+            this.beanies.forEach(beanie => beanie.update(timeDiff));
         }
 
         // Draw everything!
@@ -687,10 +812,16 @@ class Engine {
         this.boxes.forEach(box => box.render(this.ctx));
         this.leftPlanes.forEach(plane => plane.render(this.ctx));
         this.bones.forEach(bone => bone.render(this.ctx));
+        this.beanies.forEach(beanie => beanie.render(this.ctx));
         this.barn.render(this.ctx);
         this.paradise.render(this.ctx);
         this.player.render(this.ctx);
         this.startButton.render(this.ctx);
+
+
+        if (preGameOver) {
+            //this.ctx.drawImage(ima)
+        }
         if (gameOver) {
             this.ctx.drawImage(images['black-screen.png'], 0, 0)
             if (cleo1) this.ctx.drawImage(images['gameover1.png'], GAME_WIDTH / 2 - 150, 20)
@@ -701,7 +832,7 @@ class Engine {
             else if (cleo6) this.ctx.drawImage(images['gameover6.png'], GAME_WIDTH / 2 - 150, 20)
 
             if (!gameOverCycleStarted) {
-                var cycle = setInterval(function () {
+                cycle = setInterval(function () {
                     if (cleo1) {
                         cleo2 = true
                         cleo1 = false
@@ -721,9 +852,15 @@ class Engine {
                         cleo6 = false
                         cleo1 = true
                     }
-                }, 250)
+                }, 200)
                 gameOverCycleStarted = true;
             }
+            this.ctx.drawImage(images["recommencer.png"], restartButtonX, restartButtonY)
+
+        } else if (!gameOver && gameOverCycleStarted) {
+            clearInterval(cycle);
+            cycle = undefined;
+            gameOverCycleStarted = false;
         }
 
 
@@ -760,14 +897,27 @@ class Engine {
                 }
             }
         });
+        this.beanies.forEach((beanie, beanieIdx) => {
+            if (beanie.y > GAME_HEIGHT || paradiseStart) {
+                delete this.beanies[beanieIdx];
+                if (level1) {
+                    MAX_BEANIES = 0;
+                    setTimeout(() => MAX_BEANIES = 1, Math.floor(Math.random() * 5000 + 5000))
+                }
+            }
+        });
         this.setupAnvils();
         this.setupBoxes();
         this.setupPlanes();
         this.setupBones();
+        this.setupBeanies();
 
         //  Check if the player picked up bones
         if (this.didPlayerPickUpFood()) {
             console.log("animation points++")
+        }
+        if (this.didPlayerPickUpBeanie()) {
+            console.log("tuque power up")
         }
 
 
@@ -785,7 +935,7 @@ class Engine {
             // If player is not dead, then draw the score
             this.ctx.font = 'bold 30px Impact';
             this.ctx.fillStyle = '#ffffff';
-            this.ctx.fillText(this.score, 5, 30);
+            //this.ctx.fillText(this.score, 5, 30);
 
             // Set the time marker and redraw
             this.lastFrame = Date.now();
@@ -828,6 +978,45 @@ class Engine {
         }
         return false;
     }
+    didPlayerPickUpBeanie() {
+        for (let i = 0; i < this.beanies.length; i++) {
+            if (this.beanies[i] == undefined) continue;
+
+            else if (
+                this.beanies[i].x < this.player.x + PLAYER_WIDTH &&
+                this.beanies[i].x + BEANIE_WIDTH > this.player.x &&
+                this.beanies[i].y < this.player.y + PLAYER_HEIGHT &&
+                this.beanies[i].y + BEANIE_HEIGHT > this.player.y) {
+
+                this.score += 1000
+                //beaniePickup.play();
+                isPlayerInPrePowerUp = true
+                setTimeout(function () {
+                    isPlayerInPrePowerUp = false;
+                    isPlayerPoweredUp = true;
+                }, 500)
+
+                pointsLocationX = this.beanies[i].x;
+                pointsLocationY = this.beanies[i].y;
+                points = 1000;
+                displayPoints = true;
+
+                MAX_BEANIES = 0;
+
+                if (level1) {
+                    setTimeout(() => MAX_BEANIES = 1, Math.floor(Math.random() * 5000 + 5000))
+                }
+
+
+                delete this.beanies[i]
+
+                //  launch a function that will take the current coordinate and display score++ for a short amount of time
+
+                return true;
+            }
+        }
+        return false;
+    }
     //  POINTS:/
     pointDisplay() {
         if (displayPoints) {
@@ -851,6 +1040,7 @@ class Engine {
                 this.anvils[i].y + ANVIL_HEIGHT > this.player.y) {
 
                 console.log("DEAD")
+                gameOver = true;
                 // this.stopScrollingLevel()
                 // return true;
             }
@@ -859,27 +1049,31 @@ class Engine {
         for (let i = 0; i < this.leftPlanes.length; i++) {
             if (this.leftPlanes[i] == undefined) continue;
             else if (
-                this.leftPlanes[i].x < this.player.x + PLANE_WIDTH &&
+                this.leftPlanes[i].x < this.player.x + PLAYER_WIDTH &&
                 this.leftPlanes[i].x + PLANE_WIDTH > this.player.x &&
-                this.leftPlanes[i].y < this.player.y + PLANE_HEIGHT &&
+                this.leftPlanes[i].y < this.player.y + PLAYER_HEIGHT &&
                 this.leftPlanes[i].y + PLANE_HEIGHT > this.player.y) {
 
                 console.log("DEAD")
+                gameOver = true;
                 // this.stopScrollingLevel()
                 // return true;
             }
         }
+
         //  Box
         for (let i = 0; i < this.boxes.length; i++) {
             if (this.boxes[i] == undefined) continue;
             else if (
-                this.boxes[i].x < this.player.x + BOX_WIDTH &&
+                this.boxes[i].x < this.player.x + PLAYER_WIDTH &&
                 this.boxes[i].x + BOX_WIDTH > this.player.x &&
-                this.boxes[i].y < this.player.y + BOX_HEIGHT &&
-                this.boxes[i].y + BOX_HEIGHT > this.player.y) {
+                this.boxes[i].y < this.player.y + PLAYER_HEIGHT &&
+                this.boxes[i].y + BOX_HEIGHT > this.player.y
+            ) {
 
                 console.log("DEAD")
                 die.play();
+                gameOver = true;
                 // this.stopScrollingLevel()
                 // return true;
             }
