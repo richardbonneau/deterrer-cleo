@@ -14,10 +14,8 @@ var buttonY = 130;
 var restartButtonX = 110;
 var restartButtonY = 350;
 
-
 //  Pause Game
 var isGamePaused = false;
-
 
 var PLAYER_WIDTH = 58;
 var PLAYER_HEIGHT = 90;
@@ -26,7 +24,7 @@ var ENEMY_WIDTH = 75;
 var ENEMY_HEIGHT = 75;
 var MAX_ENEMIES = 0;
 
-var ANVIL_WIDTH = 75;
+var ANVIL_WIDTH = 70;
 var ANVIL_HEIGHT = 35;
 var MAX_ANVILS = 0;
 
@@ -38,7 +36,7 @@ var BONE_WIDTH = 75;
 var BONE_HEIGHT = 87;
 var MAX_BONES = 0;
 
-var BEANIE_WIDTH = 75;
+var BEANIE_WIDTH = 65;
 var BEANIE_HEIGHT = 100;
 var MAX_BEANIES = 0;
 
@@ -127,19 +125,6 @@ var powerupStage2 = false;
 var powerupStage3 = false;
 var powerupStage4 = false;
 
-// var prePowerupLeftStage1 = false;
-// var prePowerupLeftStage2 = false;
-// var prePowerupLeftStage1 = false;
-// var prePowerupLeftStage2 = false;
-
-// var powerupLeftStage1 = false;
-// var powerupLeftStage2 = false;
-// var powerupLeftStage3 = false;
-// var powerupLeftStage4 = false;
-// var powerupRightStage1 = false;
-// var powerupRightStage2 = false;
-// var powerupRightStage3 = false;
-// var powerupRightStage4 = false;
 
 //  Points Display
 var displayPoints = false;
@@ -304,8 +289,9 @@ class Anvil {
         this.sprite = images['anvil.png'];
 
         // Each enemy should have a different speed
-        this.speed = Math.random() / 2 + 0.2;
+        this.speed = (Math.random() * 1 + 5) / 10
     }
+
     update(timeDiff) {
         this.y = this.y + timeDiff * this.speed;
     }
@@ -319,7 +305,14 @@ class Box {
         this.x = xPos;
         this.y = -BOX_HEIGHT;
         this.sprite = images['box.png'];
-        this.speed = Math.random() / 2 + 0.15;
+        this.speed = this.randomizeSpeed()
+    }
+
+    randomizeSpeed() {
+
+        if (level2) return (Math.random() * 1 + 4) / 10
+        if (level1) return (Math.random() * 1 + 3) / 10
+
     }
     update(timeDiff) {
         this.y = this.y + timeDiff * this.speed;
@@ -334,8 +327,18 @@ class Plane {
         this.x = spawnLeft ? -PLANE_WIDTH : GAME_WIDTH + PLANE_WIDTH;
         this.y = yPos;
         this.sprite = spawnLeft ? images['plane-right.png'] : images['plane-left.png'];
-        this.horizontalSpeed = Math.random() / 4 + 0.02;
-        this.verticalSpeed = (Math.random() - 0.5) / 10;
+        this.horizontalSpeed = .22
+        this.verticalSpeed = this.randomizeDirection();
+
+
+        // this.verticalSpeed = (Math.random() - 0.5) / 10;
+    }
+    randomizeDirection() {
+        let diceRoll = Math.ceil(Math.random() * 3) - 2;
+
+        if (diceRoll === -1) return -0.01
+        else if (diceRoll === 0) return 0
+        else return 0.01
     }
     update(timeDiff) {
         this.y = this.y + timeDiff * this.verticalSpeed;
@@ -400,6 +403,23 @@ class Paradise {
         this.y = 0 - PARADISE_HEIGHT;
         this.sprite = images['paradise.png'];
         this.speed = 0.15;
+    }
+
+    update(timeDiff) {
+        this.y = this.y + timeDiff * this.speed;
+    }
+
+    render(ctx) {
+        ctx.drawImage(this.sprite, this.x, this.y);
+    }
+}
+
+class ScoreDisplay {
+    constructor() {
+        this.x = 0;
+        this.y = 0 - PARADISE_HEIGHT;
+        this.sprite = images['paradise.png'];
+        this.speed = 0.155;
     }
 
     update(timeDiff) {
@@ -498,17 +518,10 @@ class Engine {
         if (!this.leftPlanes) {
             this.leftPlanes = [];
         }
-        //  TODO: ajouter right planes fait crasher le jeu
-        // if (!this.rightPlanes) {
-        //     this.rightPlanes = [];
-        // }
-
         while (this.leftPlanes.filter(e => !!e).length < MAX_PLANES) {
             this.addPlane();
         }
-        // while (this.rightPlanes.filter(e => !!e).length < MAX_PLANES) {
-        //     this.addPlane();
-        // }
+
     }
 
     setupBones() {
@@ -753,8 +766,7 @@ class Engine {
         }
 
         //  GAMEPLAY:/
-        if (timeElapsed < 8000) {
-
+        if (timeElapsed < 7000) {
 
         } else if (timeElapsed < 12000) {
             if (!areBonesSpawning) {
@@ -773,6 +785,7 @@ class Engine {
             }
         } else if (timeElapsed < 50000) {
             if (!arePlanesSpawning) {
+                level2 = true;
                 arePlanesSpawning = true;
                 MAX_PLANES = 1;
             }
@@ -893,7 +906,7 @@ class Engine {
             if (anvil.y > GAME_HEIGHT || paradiseStart) {
                 delete this.anvils[anvilIdx];
                 if (level1) {
-                    setTimeout(() => MAX_ANVILS = 1, Math.floor(Math.random() * 5000 + 5000))
+                    setTimeout(() => MAX_ANVILS = 1, Math.floor(Math.random() * 1500 + 1500))
                 }
             }
         });
@@ -907,6 +920,7 @@ class Engine {
                 delete this.leftPlanes[planeIdx];
                 if (level1) {
                     MAX_PLANES = 0;
+                    // setTimeout(() => MAX_PLANES = 6, Math.floor(Math.random() * 5000 + 5000))
                     setTimeout(() => MAX_PLANES = 1, Math.floor(Math.random() * 5000 + 5000))
                 }
             }
@@ -916,7 +930,7 @@ class Engine {
                 delete this.bones[boneIdx];
                 if (level1) {
                     MAX_BONES = 0;
-                    setTimeout(() => MAX_BONES = 1, Math.floor(Math.random() * 5000 + 5000))
+                    setTimeout(() => MAX_BONES = 1, Math.floor(Math.random() * 7500 + 2500))
                 }
             }
         });
@@ -925,7 +939,7 @@ class Engine {
                 delete this.beanies[beanieIdx];
                 if (level1) {
                     MAX_BEANIES = 0;
-                    setTimeout(() => MAX_BEANIES = 1, Math.floor(Math.random() * 5000 + 5000))
+                    setTimeout(() => MAX_BEANIES = 1, Math.floor(Math.random() * 20000 + 15000))
                 }
             }
         });
@@ -1038,7 +1052,7 @@ class Engine {
                     clearInterval(prePowerupInterval);
                     isPlayerPoweredUp = false;
 
-                }, 10000)
+                }, 6000)
 
                 pointsLocationX = this.beanies[i].x;
                 pointsLocationY = this.beanies[i].y;
