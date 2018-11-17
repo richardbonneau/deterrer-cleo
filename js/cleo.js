@@ -44,6 +44,8 @@ var PLANE_WIDTH = 140;
 var PLANE_HEIGHT = 60;
 var MAX_PLANES = 0;
 
+var respawnAmount = 1;
+
 //  Start and Finish
 var BARN_WIDTH = 450;
 var BARN_HEIGHT = 300;
@@ -61,6 +63,7 @@ var stage6 = false;
 //  Start and End of level
 var barnStart = false;
 var paradiseStart = false;
+paradiseScrollStart = false
 var didPlayerWinGame = false;
 
 var cleo1 = true;
@@ -146,7 +149,7 @@ var isLevelFreeOfBones = false;
 //  Preload game images
 var images = {};
 [
-    "start-button.png", "title.png", "recommencer.png",
+    "start-button.png", "title.png", "recommencer.png", "pflogo.png",
 
     "level.png", "barn.png", "paradise.png",
 
@@ -220,6 +223,23 @@ class Player {
         this.spriteRightPowerup4 = images['player-right-powerup4.png']
 
         this.speed = 0.25;
+    }
+
+    checkIfOutOfBoundsLeft() {
+        if (0 < this.x) return true
+        else return false
+    }
+    checkIfOutOfBoundsRight() {
+        if (GAME_WIDTH > this.x + PLAYER_WIDTH) return true
+        else return false
+    }
+    checkIfOutOfBoundsTop() {
+        if (0 < this.y) return true
+        else return false
+    }
+    checkIfOutOfBoundsBottom() {
+        if (GAME_HEIGHT > this.y + PLAYER_HEIGHT) return true
+        else return false
     }
     // This method is called by the game engine when left/right arrows are pressed
     move(direction) {
@@ -415,10 +435,12 @@ class Paradise {
 }
 
 class ScoreDisplay {
-    constructor() {
-        this.x = 0;
-        this.y = 0 - PARADISE_HEIGHT;
-        this.sprite = images['paradise.png'];
+    constructor(xPos, yPos, score, color, color2) {
+        this.x = xPos;
+        this.y = yPos;
+        this.scoreToDisplay = score
+        this.color = color
+        this.color2 = color2
         this.speed = 0.155;
     }
 
@@ -427,7 +449,13 @@ class ScoreDisplay {
     }
 
     render(ctx) {
-        ctx.drawImage(this.sprite, this.x, this.y);
+        console.log("in render")
+        ctx.beginPath()
+        ctx.font = "20px Verdana"
+        ctx.fillStyle = this.color
+        ctx.fillText("*" + this.scoreToDisplay + "*", this.x, this.y);
+        ctx.closePath()
+        //ctx.fillText(this.scoreToDisplay, this.x, this.y);
     }
 }
 
@@ -447,6 +475,8 @@ class Engine {
         this.startButton = new StartButton();
 
 
+
+
         // Setup enemies
         this.addStartButton();
         this.setupAnvils();
@@ -454,6 +484,7 @@ class Engine {
         this.setupPlanes();
         this.setupBones();
         this.setupBeanies();
+        this.setupScoresToDisplay()
 
         // Setup the <canvas> element where we will be drawing
         var canvas = document.createElement('canvas');
@@ -487,6 +518,10 @@ class Engine {
                 }
             }
         });
+
+        document.addEventListener("touchstart", this.touchHandler);
+        document.addEventListener("touchmove", this.touchHandler);
+
         this.gameLoop = this.gameLoop.bind(this);
     }
 
@@ -495,6 +530,15 @@ class Engine {
      At any point in time there can be at most MAX_ENEMIES enemies otherwise the game would be impossible
      */
 
+
+    touchHandler(event) {
+        if (event.touches) {
+            playerX = e.touches[0].pageX - canvas.offsetLeft - playerWidth / 2;
+            playerY = e.touches[0].pageY - canvas.offsetTop - playerHeight / 2;
+            output.innerHTML = "Touch: " + " x: " + playerX + ", y: " + playerY;
+            e.preventDefault();
+        }
+    }
 
     setupAnvils() {
         if (!this.anvils) {
@@ -542,6 +586,16 @@ class Engine {
         while (this.beanies.filter(e => !!e).length < MAX_BEANIES) {
             this.addBeanie();
         }
+    }
+
+    setupScoresToDisplay() {
+        if (!this.scoresToDisplay) {
+            this.scoresToDisplay = [];
+        }
+
+        // while (this.scoresToDisplay.filter(e => !!e).length < MAX_BEANIES) {
+        //     this.addScoresToDisplay();
+        // }
     }
 
     // This method finds a random spot where there is no enemy, and puts one in there
@@ -616,6 +670,10 @@ class Engine {
         }
         this.beanies[beanieSpot] = new Beanie(beanieSpot * BEANIE_WIDTH);
     }
+
+    addScoresToDisplay(x, y, score, color, color2) {
+        this.scoresToDisplay[this.scoresToDisplay.length] = new ScoreDisplay(x, y, score, color, color2);
+    }
     stopSpawningEverything() {
         MAX_ANVILS = 0;
         MAX_BOXES = 0;
@@ -636,7 +694,7 @@ class Engine {
 
     // This method kicks off the game
     start() {
-        this.score = 14500;
+        this.score = 0;
         this.lastFrame = Date.now();
 
         music.loop = true;
@@ -735,10 +793,13 @@ class Engine {
     You should use this parameter to scale your update appropriately
      */
     gameLoop() {
+
+        console.log(MAX_BOXES)
         // Check how long it's been since last frame
         var currentFrame = Date.now();
         var timeDiff = currentFrame - this.lastFrame;
         var timeElapsed = -startTime + currentFrame;
+
 
 
         if (timeElapsed < 500) {
@@ -766,33 +827,35 @@ class Engine {
         }
 
         //  GAMEPLAY:/
-        if (timeElapsed < 7000) {
+        if (timeElapsed < 5000) {
 
-        } else if (timeElapsed < 12000) {
+        } else if (timeElapsed < 8000) {
             if (!areBonesSpawning) {
                 areBonesSpawning = true;
-                MAX_BONES = 1;
+                MAX_BONES = respawnAmount;
             }
-        } else if (timeElapsed < 15000) {
-            if (!areBeaniesSpawning) {
-                areBeaniesSpawning = true;
-                MAX_BEANIES = 1;
-            }
-        } else if (timeElapsed < 25000) {
+        } else if (timeElapsed < 12000) {
             if (!areBoxesSpawning) {
                 areBoxesSpawning = true;
-                MAX_BOXES = 1;
+                MAX_BOXES = respawnAmount;
             }
+
+        } else if (timeElapsed < 30000) {
+            if (!areBeaniesSpawning) {
+                areBeaniesSpawning = true;
+                MAX_BEANIES = respawnAmount;
+            }
+
         } else if (timeElapsed < 50000) {
             if (!arePlanesSpawning) {
                 level2 = true;
                 arePlanesSpawning = true;
-                MAX_PLANES = 1;
+                MAX_PLANES = respawnAmount;
             }
         } else if (timeElapsed < 75000) {
             if (!areAnvilsSpawning) {
                 areAnvilsSpawning = true;
-                MAX_ANVILS = 1;
+                MAX_ANVILS = respawnAmount;
             }
         } else if (timeElapsed < 120000) {
             paradiseStart = true;
@@ -800,15 +863,15 @@ class Engine {
 
 
         //  Update the player's positon if needed
-        if (playerMoveLeft === true) {
+        if (playerMoveLeft === true && this.player.checkIfOutOfBoundsLeft()) {
             this.player.updateHorizontal(-timeDiff);
-        } else if (playerMoveRight === true) {
+        } else if (playerMoveRight === true && this.player.checkIfOutOfBoundsRight()) {
             this.player.updateHorizontal(timeDiff);
         }
-        if (playerMoveUp === true) {
+        if (playerMoveUp === true && this.player.checkIfOutOfBoundsTop()) {
             if (playerMoveLeft || playerMoveRight) this.player.updateVertical(-timeDiff / 1.5);
             else this.player.updateVertical(-timeDiff);
-        } else if (playerMoveDown === true) {
+        } else if (playerMoveDown === true && this.player.checkIfOutOfBoundsBottom()) {
             if (playerMoveLeft || playerMoveRight) this.player.updateVertical(timeDiff / 1.5);
             else this.player.updateVertical(timeDiff);
         }
@@ -819,11 +882,22 @@ class Engine {
             this.barn.update(timeDiff);
         }
         if (paradiseStart === true) {
-            this.stopSpawningEverything();
-            this.paradise.update(timeDiff);
-            if (this.paradise.y >= 0) {
-                didPlayerWinGame = true;
+            console.log("paradisestart == true")
+
+            setTimeout(function () {
+                respawnAmount = 0;
+                console.log("timeoutended")
+                paradiseScrollStart = true;
+            }, 2000)
+
+            if (paradiseScrollStart) {
+                console.log("paradiseScrollStart")
+                this.paradise.update(timeDiff);
+                if (this.paradise.y >= 0) {
+                    didPlayerWinGame = true;
+                }
             }
+
         }
 
 
@@ -836,6 +910,7 @@ class Engine {
             this.leftPlanes.forEach(plane => plane.update(timeDiff));
             this.bones.forEach(bone => bone.update(timeDiff));
             this.beanies.forEach(beanie => beanie.update(timeDiff));
+            this.scoresToDisplay.forEach(score => score.update(timeDiff));
         }
 
         // Draw everything! DRAW:/
@@ -850,8 +925,12 @@ class Engine {
         this.paradise.render(this.ctx);
         this.player.render(this.ctx);
         this.startButton.render(this.ctx);
+        this.scoresToDisplay.forEach(score => score.render(this.ctx))
 
-        if (displayStartButton) this.ctx.drawImage(images['title.png'], GAME_WIDTH / 2 - 75, 0)
+        if (displayStartButton) {
+            this.ctx.drawImage(images["pflogo.png"], GAME_WIDTH / 2 - 225, 0)
+            this.ctx.drawImage(images['title.png'], GAME_WIDTH / 2 - 75, 0)
+        }
         //this.ctx.drawImage(images['plane-right.png'], 100, 200)
 
 
@@ -903,7 +982,7 @@ class Engine {
 
         // REACHBOTTOM:/
         this.anvils.forEach((anvil, anvilIdx) => {
-            if (anvil.y > GAME_HEIGHT || paradiseStart) {
+            if (anvil.y > GAME_HEIGHT) {
                 delete this.anvils[anvilIdx];
                 if (level1) {
                     setTimeout(() => MAX_ANVILS = 1, Math.floor(Math.random() * 1500 + 1500))
@@ -911,36 +990,47 @@ class Engine {
             }
         });
         this.boxes.forEach((box, boxIdx) => {
-            if (box.y > GAME_HEIGHT || paradiseStart) {
+            if (box.y > GAME_HEIGHT) {
                 delete this.boxes[boxIdx];
+                if (level1) {
+                    console.log("running")
+                    MAX_BOXES = 0;
+                    setTimeout(() => MAX_BOXES = respawnAmount, Math.floor(Math.random() * 100 + 0))
+
+                }
+
             }
         });
         this.leftPlanes.forEach((plane, planeIdx) => {
-            if (plane.x > GAME_WIDTH || paradiseStart) {
+            if (plane.x > GAME_WIDTH) {
                 delete this.leftPlanes[planeIdx];
                 if (level1) {
                     MAX_PLANES = 0;
-                    // setTimeout(() => MAX_PLANES = 6, Math.floor(Math.random() * 5000 + 5000))
-                    setTimeout(() => MAX_PLANES = 1, Math.floor(Math.random() * 5000 + 5000))
+                    setTimeout(() => MAX_PLANES = respawnAmount, Math.floor(Math.random() * 5000 + 5000))
                 }
             }
         });
         this.bones.forEach((bone, boneIdx) => {
-            if (bone.y > GAME_HEIGHT || paradiseStart) {
+            if (bone.y > GAME_HEIGHT) {
                 delete this.bones[boneIdx];
                 if (level1) {
                     MAX_BONES = 0;
-                    setTimeout(() => MAX_BONES = 1, Math.floor(Math.random() * 7500 + 2500))
+                    setTimeout(() => MAX_BONES = respawnAmount, Math.floor(Math.random() * 100 + 0))
                 }
             }
         });
         this.beanies.forEach((beanie, beanieIdx) => {
-            if (beanie.y > GAME_HEIGHT || paradiseStart) {
+            if (beanie.y > GAME_HEIGHT) {
                 delete this.beanies[beanieIdx];
                 if (level1) {
                     MAX_BEANIES = 0;
-                    setTimeout(() => MAX_BEANIES = 1, Math.floor(Math.random() * 20000 + 15000))
+                    setTimeout(() => MAX_BEANIES = respawnAmount, Math.floor(Math.random() * 20000 + 15000))
                 }
+            }
+        });
+        this.scoresToDisplay.forEach((score, scoreIdx) => {
+            if (score.y > GAME_HEIGHT) {
+                delete this.scoresToDisplay[scoreIdx];
             }
         });
         this.setupAnvils();
@@ -961,7 +1051,7 @@ class Engine {
         // Check if player is dead
         if (this.isPlayerDead()) {
             // If they are dead, then it's game over!
-            this.ctx.font = 'bold 30px Impact';
+            this.ctx.font = 'bold 30px Verdana';
             this.ctx.fillStyle = '#ffffff';
             this.ctx.fillText(this.score + ' GAME OVER', 5, 30);
         }
@@ -970,9 +1060,12 @@ class Engine {
         }
         else {
             // If player is not dead, then draw the score
-            this.ctx.font = 'bold 30px Impact';
-            this.ctx.fillStyle = '#ffffff';
-            //this.ctx.fillText(this.score, 5, 30);
+            if (!displayStartButton) {
+                this.ctx.font = 'bold 30px Verdana';
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillText(this.score, 5, 30);
+            }
+
 
             // Set the time marker and redraw
             this.lastFrame = Date.now();
@@ -991,7 +1084,7 @@ class Engine {
                 this.bones[i].y < this.player.y + PLAYER_HEIGHT &&
                 this.bones[i].y + BONE_HEIGHT > this.player.y) {
 
-                this.score += 1000
+
                 bonePickup.play();
 
                 pointsLocationX = this.bones[i].x;
@@ -1004,8 +1097,8 @@ class Engine {
                 if (level1) {
                     setTimeout(() => MAX_BONES = 1, Math.floor(Math.random() * 5000 + 5000))
                 }
-
-
+                this.score += 500
+                this.addScoresToDisplay(this.bones[i].x, this.bones[i].y, 500, "#E9FF00", "#04FF00")
                 delete this.bones[i]
 
                 //  launch a function that will take the current coordinate and display score++ for a short amount of time
@@ -1026,7 +1119,7 @@ class Engine {
                 this.beanies[i].y < this.player.y + PLAYER_HEIGHT &&
                 this.beanies[i].y + BEANIE_HEIGHT > this.player.y) {
 
-                this.score += 1000;
+
                 //beaniePickup.play();
                 isPlayerPoweredUp = true;
                 powerupStage1 = true;
@@ -1062,10 +1155,10 @@ class Engine {
                 MAX_BEANIES = 0;
 
                 if (level1) {
-                    setTimeout(() => MAX_BEANIES = 1, Math.floor(Math.random() * 5000 + 5000))
+                    setTimeout(() => MAX_BEANIES = 1, Math.floor(Math.random() * 20000 + 15000))
                 }
-
-
+                this.score += 2500
+                this.addScoresToDisplay(this.beanies[i].x, this.beanies[i].y, 2500, "#E9FF00", "#04FF00")
                 delete this.beanies[i]
 
                 //  launch a function that will take the current coordinate and display score++ for a short amount of time
@@ -1088,6 +1181,8 @@ class Engine {
     }
 
     isPlayerDead() {
+
+
         //  anvils
         for (let i = 0; i < this.anvils.length; i++) {
             if (this.anvils[i] == undefined) continue;
@@ -1098,10 +1193,12 @@ class Engine {
                 this.anvils[i].y + ANVIL_HEIGHT > this.player.y) {
 
                 if (isPlayerPoweredUp) {
+                    this.score += 1500
+                    this.addScoresToDisplay(this.anvils[i].x, this.anvils[i].y, 1500, "#E9FF00", "#04FF00")
                     delete this.anvils[i]
                 } else {
                     console.log("DEAD")
-                    //gameOver = true;
+                    gameOver = true;
                     // this.stopScrollingLevel()
                     // return true;
                 }
@@ -1118,10 +1215,12 @@ class Engine {
                 this.leftPlanes[i].y + PLANE_HEIGHT > this.player.y) {
 
                 if (isPlayerPoweredUp) {
+                    this.score += 2000
+                    this.addScoresToDisplay(this.leftPlanes[i].x, this.leftPlanes[i].y, 2000, "#E9FF00", "#04FF00")
                     delete this.leftPlanes[i]
                 } else {
                     console.log("DEAD")
-                    //gameOver = true;
+                    gameOver = true;
                     // this.stopScrollingLevel()
                     // return true;
                 }
@@ -1139,10 +1238,12 @@ class Engine {
             ) {
 
                 if (isPlayerPoweredUp) {
+                    this.score += 1000
+                    this.addScoresToDisplay(this.boxes[i].x, this.boxes[i].y, 1000, "#E9FF00", "#04FF00")
                     delete this.boxes[i]
                 } else {
                     console.log("DEAD")
-                    //gameOver = true;
+                    gameOver = true;
                     // this.stopScrollingLevel()
                     // return true;
                 }
