@@ -1306,7 +1306,7 @@ class Engine {
 
                 if (isPlayerPoweredUp) {
                     MAX_ANVILS = 0
-                    setTimeout(() => MAX_ANVILS = 1, Math.floor(Math.random() * 5000 + 5000))
+                    setTimeout(() => MAX_ANVILS = 1, Math.floor(Math.random() * 1500 + 2000))
                     this.score += 1500
                     this.addScoresToDisplay(this.anvils[i].x, this.anvils[i].y, 1500, "#E9FF00", "#04FF00")
                     delete this.anvils[i]
@@ -1330,7 +1330,7 @@ class Engine {
 
                 if (isPlayerPoweredUp) {
                     MAX_PLANES = 0
-                    setTimeout(() => MAX_PLANES = 1, Math.floor(Math.random() * 5000 + 5000))
+                    setTimeout(() => MAX_PLANES = 1, Math.floor(Math.random() * 2500 + 2500))
                     this.score += 2000
                     this.addScoresToDisplay(this.leftPlanes[i].x, this.leftPlanes[i].y, 2000, "#E9FF00", "#04FF00")
                     delete this.leftPlanes[i]
@@ -1355,7 +1355,7 @@ class Engine {
 
                 if (isPlayerPoweredUp) {
                     MAX_BOXES = 0
-                    setTimeout(() => MAX_BOXES = 1, Math.floor(Math.random() * 5000 + 5000))
+                    setTimeout(() => MAX_BOXES = 1, Math.floor(Math.random() * 100 + 100))
                     this.score += 1000
                     this.addScoresToDisplay(this.boxes[i].x, this.boxes[i].y, 1000, "#E9FF00", "#04FF00")
                     delete this.boxes[i]
