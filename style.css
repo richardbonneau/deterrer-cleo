@@ -1,4 +1,5 @@
 .background {
+    -webkit-user-select:none;
     z-index:-1;
     position: fixed;
     background:url("images/level.png");
@@ -8,6 +9,7 @@
 }
 
 .background-start {
+    -webkit-user-select:none;
     z-index:-1;
     position: fixed;
     background:url("images/level.png");
@@ -22,10 +24,12 @@
     }
 }
 canvas {
+    -webkit-user-select:none;
     background: transparent;
 }
 
 .container {
+    -webkit-user-select:none;
     
     padding-left: 0;
     padding-right: 0;
@@ -36,8 +40,17 @@ canvas {
     height: 500px;
 }
 body {
+    -webkit-touch-callout: none;
     -webkit-user-select: none;
     background:#BEE0FE;
+}
+@media screen and(max-width: 600px) {
+    body {
+        zoom: 200%
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        background:#BEE0FE;
+    }
 }
 
 .fadein {

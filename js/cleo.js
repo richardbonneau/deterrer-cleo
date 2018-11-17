@@ -154,7 +154,7 @@ var isLevelFreeOfBones = false;
 //  Preload game images
 var images = {};
 [
-    "start-button.png", "title.png", "recommencer.png", "pflogo.png",
+    "start-button.png", "title.png", "recommencer.png", "pflogo.png", "acheter-tuque.png",
 
     "level.png", "barn.png", "paradise.png",
 
