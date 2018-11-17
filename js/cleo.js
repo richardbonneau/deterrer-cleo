@@ -19,6 +19,11 @@ var isGamePaused = false;
 
 var PLAYER_WIDTH = 58;
 var PLAYER_HEIGHT = 90;
+var PLAYER_X = 0;
+var PLAYER_Y = 0;
+
+var destinationX = PLAYER_X
+var destinationY = PLAYER_Y;
 
 var ENEMY_WIDTH = 75;
 var ENEMY_HEIGHT = 75;
@@ -474,9 +479,6 @@ class Engine {
         this.paradise = new Paradise();
         this.startButton = new StartButton();
 
-
-
-
         // Setup enemies
         this.addStartButton();
         this.setupAnvils();
@@ -493,6 +495,58 @@ class Engine {
         element.appendChild(canvas);
         this.ctx = canvas.getContext('2d');
 
+        //   Mobile Controls
+
+        // canvas.addEventListener('mousedown', function (event) {
+        //     console.log("eventx", event.x, "playerx", PLAYER_X)
+        //     rect = canvas.getBoundingClientRect()
+        //     if (barnStart) {
+        //         if (PLAYER_X + PLAYER_WIDTH < event.x - rect.x) playerMoveRight = true;
+        //         else if (PLAYER_X > event.x - rect.x) playerMoveLeft = true;
+        //         if (PLAYER_Y + PLAYER_HEIGHT < event.y - rect.y) playerMoveDown = true;
+        //         else if (PLAYER_Y > event.y - rect.y) playerMoveUp = true;
+        //     }
+        // })
+        // canvas.addEventListener('mouseup', function (event) {
+        //     playerMoveRight = false;
+        //     playerMoveLeft = false;
+        //     playerMoveDown = false;
+        //     playerMoveUp = false;
+        // })
+        canvas.addEventListener('mousemove', function (event) {
+            rect = canvas.getBoundingClientRect()
+
+            destinationX = event.clientX - rect.x;
+            destinationY = event.clientY - rect.y;
+            event.preventDefault()
+            //console.log(event.clientX - rect.x, ",", event.clientY - rect.y)
+
+            // console.log((event.clientX - rect.x > PLAYER_X &&
+            //     event.clientX - rect.x < PLAYER_X + PLAYER_WIDTH &&
+            //     event.clientY - rect.y > PLAYER_Y &&
+            //     event.clientY - rect.y < PLAYER_Y + PLAYER))
+
+            //console.log(PLAYER_X, ' >', event.clientX - rect.x)
+
+            // if (barnStart) {
+            //     if (PLAYER_X + PLAYER_WIDTH < event.clientX - rect.x) {
+            //         playerMoveRight = true;
+            //         playerMoveLeft = false;
+            //         playerMoveDown = false;
+            //         playerMoveUp = false;
+            //     }
+            //     else if (PLAYER_X > event.clientX - rect.x) {
+            //         playerMoveLeft = true;
+            //         playerMoveRight = false;
+            //         playerMoveDown = false;
+            //         playerMoveUp = false;
+            //     }
+            //     if (PLAYER_Y + PLAYER_HEIGHT < event.clientYy - rect.y) playerMoveDown = true;
+            //     else if (PLAYER_Y > event.clientY - rect.y) playerMoveUp = true;
+
+            // }
+        })
+
         //  STARTBUTTON:/
         canvas.addEventListener('click', function (event) {
             rect = canvas.getBoundingClientRect()
@@ -502,7 +556,7 @@ class Engine {
                 event.y - rect.y > buttonY &&
                 event.y - rect.y < buttonY + buttonH
             ) {
-                console.log(displayStartButton)
+
                 // Executes if button was clicked!
                 displayStartButton = false;
                 startTime = Date.now();
@@ -519,8 +573,6 @@ class Engine {
             }
         });
 
-        document.addEventListener("touchstart", this.touchHandler);
-        document.addEventListener("touchmove", this.touchHandler);
 
         this.gameLoop = this.gameLoop.bind(this);
     }
@@ -531,14 +583,6 @@ class Engine {
      */
 
 
-    touchHandler(event) {
-        if (event.touches) {
-            playerX = e.touches[0].pageX - canvas.offsetLeft - playerWidth / 2;
-            playerY = e.touches[0].pageY - canvas.offsetTop - playerHeight / 2;
-            output.innerHTML = "Touch: " + " x: " + playerX + ", y: " + playerY;
-            e.preventDefault();
-        }
-    }
 
     setupAnvils() {
         if (!this.anvils) {
@@ -794,7 +838,7 @@ class Engine {
      */
     gameLoop() {
 
-        console.log(MAX_BOXES)
+        this.updatePlayerPosition()
         // Check how long it's been since last frame
         var currentFrame = Date.now();
         var timeDiff = currentFrame - this.lastFrame;
@@ -860,9 +904,59 @@ class Engine {
         } else if (timeElapsed < 120000) {
             paradiseStart = true;
         }
+        //  Update player position (mobile)
 
+        // console.log(destinationX, '>', PLAYER_X)
+        // console.log(destinationX, '<', PLAYER_X + PLAYER_WIDTH - 20)
+        // console.log("-----------")
+        if (barnStart) {
+            if (destinationX > PLAYER_X && destinationX < PLAYER_X + PLAYER_WIDTH) {
+                playerMoveRight = false;
+                playerMoveLeft = false;
+            }
+            else if (destinationX > PLAYER_X) {
+                playerFaceLeft = false;
+                playerFaceRight = true;
+                playerMoveRight = true;
+                playerMoveLeft = false;
+            } else {
+                playerFaceLeft = true;
+                playerFaceRight = false;
+                playerMoveLeft = true;
+                playerMoveRight = false;
+            }
+            if (destinationY > PLAYER_Y && destinationY < PLAYER_Y + PLAYER_HEIGHT) {
+                playerMoveDown = false;
+                playerMoveUp = false;
+            }
+            else if (destinationY > PLAYER_Y) {
+                playerMoveDown = true;
+                playerMoveUp = false;
+            } else {
+                playerMoveUp = true;
+                playerMoveDown = false;
+            }
 
-        //  Update the player's positon if needed
+        }
+        console.log(playerMoveLeft, playerMoveRight)
+        // if (barnStart && PLAYER_X + PLAYER_WIDTH < destinationX &&
+        //     destinationX > PLAYER_X &&
+        //     destinationX < PLAYER_X + PLAYER_WIDTH
+        //     //&& event.y - rect.y > buttonY &&
+        //     // event.y - rect.y < buttonY + buttonH
+        // ) {
+        //     playerMoveRight = true;
+        //     playerMoveLeft = false;
+        //     playerMoveDown = false;
+        //     playerMoveUp = false;
+        // } else if (PLAYER_X > destinationY) {
+        //     playerMoveLeft = true;
+        //     playerMoveRight = false;
+        //     playerMoveDown = false;
+        //     playerMoveUp = false;
+        // }
+
+        //  Update the player's positon if needed (pc)
         if (playerMoveLeft === true && this.player.checkIfOutOfBoundsLeft()) {
             this.player.updateHorizontal(-timeDiff);
         } else if (playerMoveRight === true && this.player.checkIfOutOfBoundsRight()) {
@@ -876,6 +970,19 @@ class Engine {
             else this.player.updateVertical(timeDiff);
         }
 
+        // if (barnStart) {
+        //     if (PLAYER_X + PLAYER_WIDTH < event.clientX - rect.x) {
+        //         playerMoveRight = true;
+        //         playerMoveLeft = false;
+        //         playerMoveDown = false;
+        //         playerMoveUp = false;
+        //     }
+        //     else if (PLAYER_X > event.clientX - rect.x) {
+        //         playerMoveLeft = true;
+        //         playerMoveRight = false;
+        //         playerMoveDown = false;
+        //         playerMoveUp = false;
+        //     }
 
         //  Checks if we're at the start or end of the level
         if (barnStart === true) {
@@ -1073,6 +1180,12 @@ class Engine {
         }
     }
 
+    updatePlayerPosition() {
+        PLAYER_X = this.player.x
+        PLAYER_Y = this.player.y
+
+
+    }
     //  PLAYER HIT ITEMS? :/
     didPlayerPickUpFood() {
         for (let i = 0; i < this.bones.length; i++) {
@@ -1083,7 +1196,6 @@ class Engine {
                 this.bones[i].x + BONE_WIDTH > this.player.x &&
                 this.bones[i].y < this.player.y + PLAYER_HEIGHT &&
                 this.bones[i].y + BONE_HEIGHT > this.player.y) {
-
 
                 bonePickup.play();
 
@@ -1193,6 +1305,8 @@ class Engine {
                 this.anvils[i].y + ANVIL_HEIGHT > this.player.y) {
 
                 if (isPlayerPoweredUp) {
+                    MAX_ANVILS = 0
+                    setTimeout(() => MAX_ANVILS = 1, Math.floor(Math.random() * 5000 + 5000))
                     this.score += 1500
                     this.addScoresToDisplay(this.anvils[i].x, this.anvils[i].y, 1500, "#E9FF00", "#04FF00")
                     delete this.anvils[i]
@@ -1215,6 +1329,8 @@ class Engine {
                 this.leftPlanes[i].y + PLANE_HEIGHT > this.player.y) {
 
                 if (isPlayerPoweredUp) {
+                    MAX_PLANES = 0
+                    setTimeout(() => MAX_PLANES = 1, Math.floor(Math.random() * 5000 + 5000))
                     this.score += 2000
                     this.addScoresToDisplay(this.leftPlanes[i].x, this.leftPlanes[i].y, 2000, "#E9FF00", "#04FF00")
                     delete this.leftPlanes[i]
@@ -1238,6 +1354,8 @@ class Engine {
             ) {
 
                 if (isPlayerPoweredUp) {
+                    MAX_BOXES = 0
+                    setTimeout(() => MAX_BOXES = 1, Math.floor(Math.random() * 5000 + 5000))
                     this.score += 1000
                     this.addScoresToDisplay(this.boxes[i].x, this.boxes[i].y, 1000, "#E9FF00", "#04FF00")
                     delete this.boxes[i]

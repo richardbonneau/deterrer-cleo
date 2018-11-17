@@ -36,6 +36,7 @@ canvas {
     height: 500px;
 }
 body {
+    -webkit-user-select: none;
     background:#BEE0FE;
 }
 
