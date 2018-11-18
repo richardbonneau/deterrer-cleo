@@ -2,6 +2,7 @@
 var GAME_WIDTH = 450;
 var GAME_HEIGHT = 500;
 
+var disableMobileControls = false;
 var canvas;
 //  Start Button
 var rect;
@@ -175,8 +176,6 @@ var images = {};
 
     "anvil.png", "box.png", "plane-right.png",
 
-    "fadein-to-gameover1.png", "fadein-to-gameover2.png", "fadein-to-gameover3.png",
-
     "black-screen.png", "gameover1.png", "gameover2.png", "gameover3.png", "gameover4.png", "gameover5.png", "gameover6.png",
 
 ].forEach(imgName => {
@@ -187,9 +186,10 @@ var images = {};
 
 var music = new Audio("audio/music.wav");
 var woofStart = new Audio("audio/woof-woof-start.wav");
-var planeFlyBy = new Audio("audio/plane-fly-by.wav");
+//var planeFlyBy = new Audio("audio/plane-fly-by.wav");
 var bonePickup = new Audio("audio/bone-pickup.wav");
-var die = new Audio("audio/die.wav");
+var loseMusic = new Audio("audio/lose-music.wav");
+var powerup = new Audio("audio/powerup.wav")
 
 
 
@@ -459,7 +459,7 @@ class ScoreDisplay {
     }
 
     render(ctx) {
-        console.log("in render")
+
         ctx.beginPath()
         ctx.font = "20px Verdana"
         ctx.fillStyle = this.color
@@ -529,7 +529,7 @@ class Engine {
         });
 
         canvas.addEventListener('mousemove', function (event) {
-            console.log("in touchscreen")
+
             rect = canvas.getBoundingClientRect()
             destinationX = event.clientX - rect.x;
             destinationY = event.clientY - rect.y;
@@ -671,7 +671,7 @@ class Engine {
             leftPlaneSpot = Math.floor(Math.random() * leftPlaneSpots);
         }
         this.leftPlanes[leftPlaneSpot] = new Plane(leftPlaneSpot * PLANE_HEIGHT, true);
-        planeFlyBy.play();
+        // planeFlyBy.play();
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //  TODO: ajouter right planes fait crasher le jeu
@@ -740,6 +740,7 @@ class Engine {
 
         // Movement:/
         document.addEventListener('keydown', (down) => {
+            disableMobileControls = true;
             if (barnStart) {
                 if (down.keyCode === LEFT_ARROW_CODE) {
                     this.player.move(MOVE_LEFT);
@@ -902,8 +903,8 @@ class Engine {
         // console.log(destinationX, '>', PLAYER_X)
         // console.log(destinationX, '<', PLAYER_X + PLAYER_WIDTH - 20)
         // console.log("-----------")
-        if (barnStart) {
-            console.log("setting up movement bools")
+        if (barnStart && !disableMobileControls) {
+
 
             if (destinationX > PLAYER_X && destinationX < PLAYER_X + PLAYER_WIDTH) {
                 playerMoveRight = false;
@@ -982,16 +983,16 @@ class Engine {
             this.barn.update(timeDiff);
         }
         if (paradiseStart === true) {
-            console.log("paradisestart == true")
+
 
             setTimeout(function () {
                 respawnAmount = 0;
-                console.log("timeoutended")
+
                 paradiseScrollStart = true;
             }, 2000)
 
             if (paradiseScrollStart) {
-                console.log("paradiseScrollStart")
+
                 this.paradise.update(timeDiff);
                 if (this.paradise.y >= 0) {
                     didPlayerWinGame = true;
@@ -1093,7 +1094,7 @@ class Engine {
             if (box.y > GAME_HEIGHT) {
                 delete this.boxes[boxIdx];
                 if (level1) {
-                    console.log("running")
+
                     MAX_BOXES = 0;
                     setTimeout(() => MAX_BOXES = respawnAmount, Math.floor(Math.random() * 100 + 0))
 
@@ -1141,10 +1142,10 @@ class Engine {
 
         //  Check if the player picked up bones
         if (this.didPlayerPickUpFood()) {
-            console.log("animation points++")
+
         }
         if (this.didPlayerPickUpBeanie()) {
-            console.log("tuque power up")
+
         }
 
 
@@ -1228,9 +1229,11 @@ class Engine {
                 //beaniePickup.play();
                 isPlayerPoweredUp = true;
                 powerupStage1 = true;
+                powerup.volume = 0.7
+                powerup.play();
 
                 let prePowerupInterval = setInterval(function () {
-                    console.log("in interval")
+
                     if (powerupStage1) {
                         powerupStage1 = false;
                         powerupStage2 = true;
@@ -1250,7 +1253,7 @@ class Engine {
                     clearInterval(prePowerupInterval);
                     isPlayerPoweredUp = false;
 
-                }, 6000)
+                }, 7400)
 
                 pointsLocationX = this.beanies[i].x;
                 pointsLocationY = this.beanies[i].y;
@@ -1298,13 +1301,15 @@ class Engine {
                 this.anvils[i].y + ANVIL_HEIGHT > this.player.y) {
 
                 if (isPlayerPoweredUp) {
+                    new Audio("audio/destroy-object.wav").play()
                     MAX_ANVILS = 0
                     setTimeout(() => MAX_ANVILS = 1, Math.floor(Math.random() * 1500 + 2000))
                     this.score += 1500
                     this.addScoresToDisplay(this.anvils[i].x, this.anvils[i].y, 1500, "#E9FF00", "#04FF00")
                     delete this.anvils[i]
                 } else {
-                    console.log("DEAD")
+                    loseMusic.play()
+
                     gameOver = true;
                     // this.stopScrollingLevel()
                     // return true;
@@ -1322,13 +1327,15 @@ class Engine {
                 this.leftPlanes[i].y + PLANE_HEIGHT > this.player.y) {
 
                 if (isPlayerPoweredUp) {
+                    new Audio("audio/destroy-object.wav").play()
                     MAX_PLANES = 0
                     setTimeout(() => MAX_PLANES = 1, Math.floor(Math.random() * 2500 + 2500))
                     this.score += 2000
                     this.addScoresToDisplay(this.leftPlanes[i].x, this.leftPlanes[i].y, 2000, "#E9FF00", "#04FF00")
                     delete this.leftPlanes[i]
                 } else {
-                    console.log("DEAD")
+                    loseMusic.play()
+
                     gameOver = true;
                     // this.stopScrollingLevel()
                     // return true;
@@ -1347,13 +1354,15 @@ class Engine {
             ) {
 
                 if (isPlayerPoweredUp) {
+                    new Audio("audio/destroy-object.wav").play()
                     MAX_BOXES = 0
                     setTimeout(() => MAX_BOXES = 1, Math.floor(Math.random() * 100 + 100))
                     this.score += 1000
                     this.addScoresToDisplay(this.boxes[i].x, this.boxes[i].y, 1000, "#E9FF00", "#04FF00")
                     delete this.boxes[i]
                 } else {
-                    console.log("DEAD")
+                    loseMusic.play()
+
                     gameOver = true;
                     // this.stopScrollingLevel()
                     // return true;
