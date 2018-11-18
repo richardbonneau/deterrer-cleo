@@ -160,7 +160,7 @@ var isPlayerPressing = false;
 //  Preload game images
 var images = {};
 [
-    "start-button.png", "title.png", "recommencer.png", "pflogo.png", "acheter-tuque.png",
+    "start-button.png", "title.png", "recommencer.png", "pflogo.png", "acheter-tuque.png", "game-finished.png",
 
     "level.png", "barn.png", "paradise.png",
 
@@ -183,14 +183,12 @@ var images = {};
     img.src = 'images/' + imgName;
     images[imgName] = img;
 });
-
+//var planeFlyBy = new Audio("audio/plane-fly-by.wav");
 var music = new Audio("audio/music.wav");
 var woofStart = new Audio("audio/woof-woof-start.wav");
-//var planeFlyBy = new Audio("audio/plane-fly-by.wav");
 var bonePickup = new Audio("audio/bone-pickup.wav");
 var loseMusic = new Audio("audio/lose-music.wav");
 var powerup = new Audio("audio/powerup.wav")
-
 
 
 // This section is where you will be doing most of your coding
@@ -516,15 +514,23 @@ class Engine {
                 displayStartButton = false;
                 startTime = Date.now();
                 music.play();
+                destinationX = PLAYER_X
+                destinationY = PLAYER_Y
             }
             if (gameOver &&
                 event.x - rect.x > restartButtonX &&
                 event.x - rect.x < restartButtonX + buttonW &&
                 event.y - rect.y > restartButtonY &&
                 event.y - rect.y < restartButtonY + buttonH) {
-                {
-                    location.reload();
-                }
+                location.reload();
+            }
+            if (didPlayerWinGame &&
+                event.x - rect.x > restartButtonX &&
+                event.x - rect.x < restartButtonX + buttonW &&
+                event.y - rect.y > restartButtonY &&
+                event.y - rect.y < restartButtonY + buttonH) {
+                console.log("clicked")
+                window.location.href = "http://deterrercleo.com/?utm_source=referral&utm_medium=referral&utm_campaign=deterrer_cleo&utm_content=Cleo_button"
             }
         });
 
@@ -738,6 +744,14 @@ class Engine {
         music.volume = 0.5;
 
 
+        function detectmob() {
+
+            if (window.innerWidth >= 800 && window.innerHeight >= 600) {
+                disableMobileControls = true;
+            }
+        }
+        detectmob()
+
         // Movement:/
         document.addEventListener('keydown', (down) => {
             disableMobileControls = true;
@@ -778,8 +792,8 @@ class Engine {
                 // barnStart = true;
                 // MAX_BONES = 2;
                 // MAX_BOXES = 2;
-                // document.getElementById("background").classList.remove("background-start")
-                // document.getElementById("background").classList.add("background")
+                // document.getElementById("background").classList.remove("background-start");
+                // document.getElementById("background").classList.add("background");
                 gameOver = false;
             }
         })
@@ -796,6 +810,7 @@ class Engine {
             if (down.keyCode === 80) {
                 document.getElementById("background").classList.remove("background-start")
                 document.getElementById("background").classList.add("fadein")
+
 
                 // stage4 = false;
                 // barnStart = true;
@@ -1047,6 +1062,10 @@ class Engine {
             else if (cleo5) this.ctx.drawImage(images['gameover5.png'], GAME_WIDTH / 2 - 150, 20)
             else if (cleo6) this.ctx.drawImage(images['gameover6.png'], GAME_WIDTH / 2 - 150, 20)
 
+            woofStart.muted = true
+            bonePickup.muted = true
+            powerup.muted = true
+
             if (!gameOverCycleStarted) {
                 cycle = setInterval(function () {
                     if (cleo1) {
@@ -1157,7 +1176,15 @@ class Engine {
             this.ctx.fillText(this.score + ' GAME OVER', 5, 30);
         }
         else if (didPlayerWinGame) {
+            //  gamefinish:/
             this.stopScrollingLevel()
+            this.ctx.drawImage(images["game-finished.png"], 0, 0)
+            this.ctx.drawImage(images["acheter-tuque.png"], (GAME_WIDTH / 2) - 112, 350)
+
+            let sub = document.getElementsByClassName("subbody")[0]
+            console.log(sub)
+            sub.setAttribute('href', 'http://www.google.ca');
+
         }
         else {
             // If player is not dead, then draw the score
