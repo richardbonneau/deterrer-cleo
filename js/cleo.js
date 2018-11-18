@@ -786,51 +786,51 @@ class Engine {
             }
         })
 
-        // Space
-        document.addEventListener("keydown", down => {
-            if (down.keyCode === 32) {
-                // barnStart = true;
-                // MAX_BONES = 2;
-                // MAX_BOXES = 2;
-                // document.getElementById("background").classList.remove("background-start");
-                // document.getElementById("background").classList.add("background");
-                gameOver = false;
-            }
-        })
-        // CTRL
-        document.addEventListener("keydown", down => {
-            if (down.keyCode === 17) {
-                // barnStart = false;
-                // stage4 = true;
-                paradiseStart = true;
-            }
-        })
-        // P
-        document.addEventListener("keydown", down => {
-            if (down.keyCode === 80) {
-                document.getElementById("background").classList.remove("background-start")
-                document.getElementById("background").classList.add("fadein")
+        // // Space
+        // document.addEventListener("keydown", down => {
+        //     if (down.keyCode === 32) {
+        //         // barnStart = true;
+        //         // MAX_BONES = 2;
+        //         // MAX_BOXES = 2;
+        //         // document.getElementById("background").classList.remove("background-start");
+        //         // document.getElementById("background").classList.add("background");
+        //         gameOver = false;
+        //     }
+        // })
+        // // CTRL
+        // document.addEventListener("keydown", down => {
+        //     if (down.keyCode === 17) {
+        //         // barnStart = false;
+        //         // stage4 = true;
+        //         paradiseStart = true;
+        //     }
+        // })
+        // // P
+        // document.addEventListener("keydown", down => {
+        //     if (down.keyCode === 80) {
+        //         document.getElementById("background").classList.remove("background-start")
+        //         document.getElementById("background").classList.add("fadein")
 
 
-                // stage4 = false;
-                // barnStart = true;
+        //         // stage4 = false;
+        //         // barnStart = true;
 
-                // if (isGamePaused === false) {
-                //     isGamePaused = true;
-                // } else isGamePaused = false;
+        //         // if (isGamePaused === false) {
+        //         //     isGamePaused = true;
+        //         // } else isGamePaused = false;
 
-            }
-        })
+        //     }
+        // })
 
-        //  Levels
-        document.addEventListener("keydown", down => {
-            if (down.keyCode === 48) {
-                level0 = true;
-                level1 = false;
-                level3 = false;
-                level4 = false;
-            }
-        })
+        // //  Levels
+        // document.addEventListener("keydown", down => {
+        //     if (down.keyCode === 48) {
+        //         level0 = true;
+        //         level1 = false;
+        //         level3 = false;
+        //         level4 = false;
+        //     }
+        // })
 
         this.gameLoop();
     }
@@ -1011,6 +1011,7 @@ class Engine {
                 this.paradise.update(timeDiff);
                 if (this.paradise.y >= 0) {
                     didPlayerWinGame = true;
+                    console.log("player win game")
                 }
             }
 
@@ -1176,6 +1177,7 @@ class Engine {
             this.ctx.fillText(this.score + ' GAME OVER', 5, 30);
         }
         else if (didPlayerWinGame) {
+            console.log("drwaing stuff")
             //  gamefinish:/
             this.stopScrollingLevel()
             this.ctx.drawImage(images["game-finished.png"], 0, 0)
@@ -1183,7 +1185,7 @@ class Engine {
 
             let sub = document.getElementsByClassName("subbody")[0]
             console.log(sub)
-            sub.setAttribute('href', 'http://www.google.ca');
+            sub.setAttribute('href', 'https://pochesetfils.com/discount/cleo?redirect=%2Fcollections%2Faccessoires-tuques');
 
         }
         else {
