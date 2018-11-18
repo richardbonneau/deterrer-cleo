@@ -2,6 +2,7 @@
 var GAME_WIDTH = 450;
 var GAME_HEIGHT = 500;
 
+var canvas;
 //  Start Button
 var rect;
 var displayStartButton = true;
@@ -24,6 +25,8 @@ var PLAYER_Y = 0;
 
 var destinationX = PLAYER_X
 var destinationY = PLAYER_Y;
+var oldDestinationX = 0
+var oldDestinationY = 0
 
 var ENEMY_WIDTH = 75;
 var ENEMY_HEIGHT = 75;
@@ -149,6 +152,8 @@ var nbAllowedBones = 0;
 
 var amountsAllowedItemsAreSet = false;
 var isLevelFreeOfBones = false;
+
+var isPlayerPressing = false;
 
 
 //  Preload game images
@@ -489,63 +494,13 @@ class Engine {
         this.setupScoresToDisplay()
 
         // Setup the <canvas> element where we will be drawing
-        var canvas = document.createElement('canvas');
+        canvas = document.createElement('canvas');
         canvas.width = GAME_WIDTH;
         canvas.height = GAME_HEIGHT;
         element.appendChild(canvas);
         this.ctx = canvas.getContext('2d');
 
         //   Mobile Controls
-
-        // canvas.addEventListener('mousedown', function (event) {
-        //     console.log("eventx", event.x, "playerx", PLAYER_X)
-        //     rect = canvas.getBoundingClientRect()
-        //     if (barnStart) {
-        //         if (PLAYER_X + PLAYER_WIDTH < event.x - rect.x) playerMoveRight = true;
-        //         else if (PLAYER_X > event.x - rect.x) playerMoveLeft = true;
-        //         if (PLAYER_Y + PLAYER_HEIGHT < event.y - rect.y) playerMoveDown = true;
-        //         else if (PLAYER_Y > event.y - rect.y) playerMoveUp = true;
-        //     }
-        // })
-        // canvas.addEventListener('mouseup', function (event) {
-        //     playerMoveRight = false;
-        //     playerMoveLeft = false;
-        //     playerMoveDown = false;
-        //     playerMoveUp = false;
-        // })
-        canvas.addEventListener('mousemove', function (event) {
-            rect = canvas.getBoundingClientRect()
-
-            destinationX = event.clientX - rect.x;
-            destinationY = event.clientY - rect.y;
-            event.preventDefault()
-            //console.log(event.clientX - rect.x, ",", event.clientY - rect.y)
-
-            // console.log((event.clientX - rect.x > PLAYER_X &&
-            //     event.clientX - rect.x < PLAYER_X + PLAYER_WIDTH &&
-            //     event.clientY - rect.y > PLAYER_Y &&
-            //     event.clientY - rect.y < PLAYER_Y + PLAYER))
-
-            //console.log(PLAYER_X, ' >', event.clientX - rect.x)
-
-            // if (barnStart) {
-            //     if (PLAYER_X + PLAYER_WIDTH < event.clientX - rect.x) {
-            //         playerMoveRight = true;
-            //         playerMoveLeft = false;
-            //         playerMoveDown = false;
-            //         playerMoveUp = false;
-            //     }
-            //     else if (PLAYER_X > event.clientX - rect.x) {
-            //         playerMoveLeft = true;
-            //         playerMoveRight = false;
-            //         playerMoveDown = false;
-            //         playerMoveUp = false;
-            //     }
-            //     if (PLAYER_Y + PLAYER_HEIGHT < event.clientYy - rect.y) playerMoveDown = true;
-            //     else if (PLAYER_Y > event.clientY - rect.y) playerMoveUp = true;
-
-            // }
-        })
 
         //  STARTBUTTON:/
         canvas.addEventListener('click', function (event) {
@@ -572,6 +527,44 @@ class Engine {
                 }
             }
         });
+
+        canvas.addEventListener('mousemove', function (event) {
+            console.log("in touchscreen")
+            rect = canvas.getBoundingClientRect()
+            destinationX = event.clientX - rect.x;
+            destinationY = event.clientY - rect.y;
+            isPlayerPressing = true;
+            event.preventDefault()
+        })
+        // canvas.addEventListener('touchstart', function (event) {
+        //     console.log("in touchscreen")
+        //     rect = canvas.getBoundingClientRect()
+        //     destinationX = event.clientX - rect.x;
+        //     destinationY = event.clientY - rect.y;
+        //     isPlayerPressing = true;
+        //     event.preventDefault()
+
+        // })
+
+
+        // canvas.addEventListener('touchend', function (event) {
+        //     isPlayerPressing = false;
+        // })
+        // canvas.addEventListener('touchcancel', function (event) {
+        //     isPlayerPressing = false;
+        // })
+
+        // canvas.addEventListener('mousedown', function (event) {
+
+        //     isPlayerPressing = true;
+
+        // })
+        // canvas.addEventListener('mouseup', function (event) {
+
+        //     isPlayerPressing = false;
+
+        // })
+
 
 
         this.gameLoop = this.gameLoop.bind(this);
@@ -910,11 +903,12 @@ class Engine {
         // console.log(destinationX, '<', PLAYER_X + PLAYER_WIDTH - 20)
         // console.log("-----------")
         if (barnStart) {
+            console.log("setting up movement bools")
+
             if (destinationX > PLAYER_X && destinationX < PLAYER_X + PLAYER_WIDTH) {
                 playerMoveRight = false;
                 playerMoveLeft = false;
-            }
-            else if (destinationX > PLAYER_X) {
+            } else if (destinationX > PLAYER_X) {
                 playerFaceLeft = false;
                 playerFaceRight = true;
                 playerMoveRight = true;
@@ -925,20 +919,19 @@ class Engine {
                 playerMoveLeft = true;
                 playerMoveRight = false;
             }
+
             if (destinationY > PLAYER_Y && destinationY < PLAYER_Y + PLAYER_HEIGHT) {
                 playerMoveDown = false;
                 playerMoveUp = false;
-            }
-            else if (destinationY > PLAYER_Y) {
+            } else if (destinationY > PLAYER_Y) {
                 playerMoveDown = true;
                 playerMoveUp = false;
             } else {
                 playerMoveUp = true;
                 playerMoveDown = false;
             }
-
         }
-        console.log(playerMoveLeft, playerMoveRight)
+
         // if (barnStart && PLAYER_X + PLAYER_WIDTH < destinationX &&
         //     destinationX > PLAYER_X &&
         //     destinationX < PLAYER_X + PLAYER_WIDTH
