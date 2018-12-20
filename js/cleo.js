@@ -524,13 +524,13 @@ class Engine {
                 event.y - rect.y < restartButtonY + buttonH) {
                 location.reload();
             }
-            if (didPlayerWinGame &&
+            if (didPlayerWinGame && !gameOver &&
                 event.x - rect.x > restartButtonX &&
                 event.x - rect.x < restartButtonX + buttonW &&
                 event.y - rect.y > restartButtonY &&
                 event.y - rect.y < restartButtonY + buttonH) {
                 console.log("clicked")
-                window.location.href = "http://deterrercleo.com/?utm_source=referral&utm_medium=referral&utm_campaign=deterrer_cleo&utm_content=Cleo_button"
+                window.location.href = "https://pochesetfils.com/discount/cleo?redirect=%2Fcollections%2Faccessoires-tuques"
             }
         });
 
@@ -1176,16 +1176,16 @@ class Engine {
             this.ctx.fillStyle = '#ffffff';
             this.ctx.fillText(this.score + ' GAME OVER', 5, 30);
         }
-        else if (didPlayerWinGame) {
+        else if (didPlayerWinGame && !gameOver) {
             console.log("drwaing stuff")
             //  gamefinish:/
             this.stopScrollingLevel()
             this.ctx.drawImage(images["game-finished.png"], 0, 0)
             this.ctx.drawImage(images["acheter-tuque.png"], (GAME_WIDTH / 2) - 112, 350)
 
-            let sub = document.getElementsByClassName("subbody")[0]
-            console.log(sub)
-            sub.setAttribute('href', 'https://pochesetfils.com/discount/cleo?redirect=%2Fcollections%2Faccessoires-tuques');
+            // let sub = document.getElementsByClassName("subbody")[0]
+            // console.log(sub)
+            // sub.setAttribute('href', 'https://pochesetfils.com/discount/cleo?redirect=%2Fcollections%2Faccessoires-tuques');
 
         }
         else {
